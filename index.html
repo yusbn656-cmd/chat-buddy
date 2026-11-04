@@ -1,0 +1,267 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1769e0">
+<title>Chat Buddy - AI Assistant</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f7fc;
+  color: #18243a;
+}
+
+header {
+  height: 65px;
+  background: #1769e0;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+header button {
+  border: 0;
+  background: transparent;
+  color: white;
+  font-size: 15px;
+}
+
+.container {
+  max-width: 850px;
+  margin: auto;
+  padding: 20px 15px;
+}
+
+.welcome {
+  text-align: center;
+  padding: 35px 10px 20px;
+}
+
+.robot {
+  font-size: 55px;
+}
+
+.welcome h1 {
+  font-size: 27px;
+  margin: 12px 0;
+}
+
+.welcome p {
+  color: #68758b;
+}
+
+.chat-box {
+  background: white;
+  border-radius: 18px;
+  min-height: 390px;
+  padding: 18px;
+  box-shadow: 0 3px 15px #dce4f0;
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.message {
+  padding: 13px 16px;
+  border-radius: 15px;
+  max-width: 85%;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bot {
+  background: #edf3fc;
+  align-self: flex-start;
+}
+
+.user {
+  background: #1769e0;
+  color: white;
+  align-self: flex-end;
+}
+
+.input-area {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+input {
+  min-width: 0;
+  flex: 1;
+  padding: 15px;
+  border: 1px solid #d7dfeb;
+  border-radius: 12px;
+  font-size: 15px;
+  outline: none;
+}
+
+input:focus {
+  border-color: #1769e0;
+}
+
+.send {
+  background: #1769e0;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 0 19px;
+  font-size: 16px;
+}
+
+.tools {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 22px 0;
+}
+
+.tools button {
+  background: white;
+  border: 1px solid #dce4f0;
+  border-radius: 20px;
+  padding: 11px 15px;
+  color: #34445d;
+}
+
+.notice {
+  font-size: 12px;
+  color: #778399;
+  text-align: center;
+  margin-top: 18px;
+}
+
+footer {
+  text-align: center;
+  color: #8490a3;
+  padding: 25px;
+  font-size: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">🤖 Chat Buddy</div>
+  <button onclick="newChat()">＋ 새 채팅</button>
+</header>
+
+<main class="container">
+
+  <section class="welcome">
+    <div class="robot">🤖</div>
+    <h1>안녕하세요!</h1>
+    <p>무엇이든 편하게 물어보세요.</p>
+  </section>
+
+  <section class="chat-box">
+    <div class="messages" id="messages">
+      <div class="message bot">
+        안녕하세요! 저는 Chat Buddy입니다. 😊
+        궁금한 것을 자유롭게 물어보세요!
+      </div>
+    </div>
+
+    <div class="input-area">
+      <input
+        id="userInput"
+        type="text"
+        placeholder="메시지를 입력하세요..."
+        autocomplete="off"
+      >
+      <button class="send" onclick="sendMessage()">
+        전송
+      </button>
+    </div>
+
+    <div class="notice">
+      현재 테스트 버전입니다. 실제 AI 연결 전입니다.
+    </div>
+  </section>
+
+  <section class="tools">
+    <button onclick="showFeature('사진 분석')">📷 사진 분석</button>
+    <button onclick="showFeature('음성 대화')">🎤 음성 대화</button>
+    <button onclick="showFeature('인터넷 검색')">🌐 인터넷 검색</button>
+    <button onclick="newChat()">＋ 새 대화</button>
+  </section>
+
+</main>
+
+<footer>
+  Chat Buddy © 2026
+</footer>
+
+<script>
+const input = document.getElementById("userInput");
+const messages = document.getElementById("messages");
+
+function addMessage(text, type) {
+  const div = document.createElement("div");
+  div.className = "message " + type;
+  div.textContent = text;
+  messages.appendChild(div);
+  div.scrollIntoView({ behavior: "smooth" });
+}
+
+function sendMessage() {
+  const text = input.value.trim();
+
+  if (!text) return;
+
+  addMessage(text, "user");
+  input.value = "";
+
+  setTimeout(() => {
+    addMessage(
+      "현재 Chat Buddy는 화면 테스트 버전입니다.\n실제 AI 서버를 연결하면 질문에 맞는 AI 답변을 제공할 수 있습니다.",
+      "bot"
+    );
+  }, 500);
+}
+
+input.addEventListener("keydown", function(event) {
+  if (event.key === "Enter") {
+    sendMessage();
+  }
+});
+
+function newChat() {
+  messages.innerHTML = "";
+  addMessage(
+    "새 대화가 시작되었습니다! 무엇을 도와드릴까요?",
+    "bot"
+  );
+}
+
+function showFeature(name) {
+  addMessage(
+    name + " 기능은 다음 개발 단계에서 연결할 예정입니다.",
+    "bot"
+  );
+}
+</script>
+
+</body>
+</html>
