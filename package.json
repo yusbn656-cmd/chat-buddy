@@ -1,0 +1,12 @@
+{
+"name": "chat-buddy",
+"version": "1.0.0",
+"description": "My AI Chatbot",
+"main": "server.js",
+"scripts": {
+"start": "node server.js"
+},
+"dependencies": {
+"express": "^4.21.2"
+}
+}
