@@ -1,6 +1,5 @@
 
 const express = require("express");
-const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,7 +36,9 @@ app.post("/api/chat", async (req, res) => {
         body: JSON.stringify({
           contents: [
             {
-              parts: [{ text: message }]
+              parts: [
+                { text: message }
+              ]
             }
           ]
         })
@@ -60,6 +61,8 @@ app.post("/api/chat", async (req, res) => {
     });
 
   } catch (error) {
+    console.error(error);
+
     res.status(500).json({
       error: "서버 오류가 발생했습니다."
     });
@@ -67,5 +70,5 @@ app.post("/api/chat", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Chat Buddy running on port ${PORT}`);
+  console.log("Chat Buddy running on port " + PORT);
 });
