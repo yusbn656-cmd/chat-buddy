@@ -11,7 +11,7 @@ app.post("/api/chat", async (req, res) => {
   try {
     const message = req.body.message;
 
-    if (!message) {
+    if (!message || !message.trim()) {
       return res.status(400).json({
         error: "메시지를 입력해 주세요."
       });
@@ -40,7 +40,11 @@ app.post("/api/chat", async (req, res) => {
                 { text: message }
               ]
             }
-          ]
+          ],
+          generationConfig: {
+            maxOutputTokens: 512,
+            temperature: 0.7
+          }
         })
       }
     );
@@ -48,6 +52,8 @@ app.post("/api/chat", async (req, res) => {
     const data = await response.json();
 
     if (!response.ok) {
+      console.error("Gemini 오류:", data);
+
       return res.status(response.status).json({
         error: data.error?.message || "AI 연결 오류"
       });
@@ -61,7 +67,7 @@ app.post("/api/chat", async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("서버 오류:", error);
 
     res.status(500).json({
       error: "서버 오류가 발생했습니다."
