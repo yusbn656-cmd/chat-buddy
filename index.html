@@ -2,318 +2,319 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chat Buddy</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Buddy</title>
 
-<style>
-* {
-  box-sizing: border-box;
-}
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-body {
-  margin: 0;
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  background: #111111;
-  color: #ffffff;
-  font-family: Arial, sans-serif;
-}
+    body {
+      margin: 0;
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
 
-header {
-  height: 65px;
-  padding: 0 18px;
-  background: #1c1c1c;
-  border-bottom: 1px solid #333333;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+    header {
+      height: 90px;
+      padding: 20px;
+      background: #1c1c1c;
+      border-bottom: 1px solid #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-.logo {
-  font-size: 21px;
-  font-weight: bold;
-}
+    header h1 {
+      font-size: 28px;
+      margin: 0;
+    }
 
-button {
-  cursor: pointer;
-}
+    button {
+      cursor: pointer;
+      border: none;
+    }
 
-.new-chat {
-  background: #333333;
-  color: #ffffff;
-  border: 1px solid #555555;
-  border-radius: 9px;
-  padding: 10px 14px;
-}
+    #newChat {
+      padding: 15px 20px;
+      border-radius: 15px;
+      background: #333;
+      color: white;
+      border: 1px solid #555;
+      font-size: 16px;
+    }
 
-main {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
+    #chat {
+      height: calc(100dvh - 250px);
+      overflow-y: auto;
+      padding: 25px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
 
-.welcome {
-  margin: auto 0;
-  text-align: center;
-}
+    .message {
+      max-width: 85%;
+      padding: 18px 20px;
+      border-radius: 25px;
+      font-size: 18px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
 
-.welcome h1 {
-  font-size: 27px;
-}
+    .user {
+      align-self: flex-end;
+      background: #f1f1f1;
+      color: #111;
+    }
 
-.welcome p {
-  color: #999999;
-  font-size: 14px;
-}
+    .bot {
+      align-self: flex-start;
+      background: #292929;
+      color: white;
+    }
 
-.message {
-  max-width: 85%;
-  padding: 13px 16px;
-  border-radius: 15px;
-  font-size: 15px;
-  line-height: 1.7;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
+    .loading {
+      color: #aaa;
+      font-size: 15px;
+    }
 
-.user {
-  align-self: flex-end;
-  background: #eeeeee;
-  color: #111111;
-}
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 15px 20px 25px;
+      background: #1c1c1c;
+      border-top: 1px solid #333;
+    }
 
-.bot {
-  align-self: flex-start;
-  background: #292929;
-  color: #ffffff;
-}
+    .input-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: #292929;
+      border: 1px solid #444;
+      border-radius: 25px;
+    }
 
-footer {
-  padding: 12px 14px;
-  background: #1c1c1c;
-  border-top: 1px solid #333333;
-}
+    #messageInput {
+      flex: 1;
+      min-width: 0;
+      padding: 12px;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: white;
+      font-size: 17px;
+    }
 
-.input-area {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 7px 6px 14px;
-  background: #292929;
-  border: 1px solid #444444;
-  border-radius: 15px;
-}
+    #sendButton {
+      width: 60px;
+      height: 60px;
+      flex-shrink: 0;
+      border-radius: 18px;
+      background: white;
+      color: black;
+      font-size: 30px;
+    }
 
-input {
-  flex: 1;
-  min-width: 0;
-  padding: 12px 0;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: #ffffff;
-  font-size: 15px;
-}
+    #sendButton:disabled {
+      opacity: 0.5;
+    }
 
-input::placeholder {
-  color: #999999;
-}
-
-.send {
-  width: 40px;
-  height: 40px;
-  border: none;
-  border-radius: 10px;
-  background: #eeeeee;
-  color: #111111;
-  font-size: 22px;
-}
-
-.send:disabled {
-  opacity: 0.4;
-}
-
-.notice {
-  margin-top: 9px;
-  text-align: center;
-  color: #777777;
-  font-size: 11px;
-}
-</style>
+    .bottom-text {
+      text-align: center;
+      color: #777;
+      margin-top: 15px;
+    }
+  </style>
 </head>
 
 <body>
 
 <header>
-  <div class="logo">Chat Buddy</div>
-  <button class="new-chat" onclick="newChat()">새 대화</button>
+  <h1>Chat Buddy</h1>
+  <button id="newChat">새 대화</button>
 </header>
 
-<main id="chat">
-  <div class="welcome" id="welcome">
-    <h1>무엇이든 물어보세요.</h1>
-    <p>Chat Buddy와 자유롭게 대화하세요.</p>
-  </div>
-</main>
+<main id="chat"></main>
 
 <footer>
   <div class="input-area">
     <input
-      id="message"
+      id="messageInput"
       type="text"
       placeholder="메시지를 입력하세요..."
       autocomplete="off"
     >
-    <button class="send" id="send" onclick="sendMessage()">↑</button>
+    <button id="sendButton">↑</button>
   </div>
-  <div class="notice">
-    Chat Buddy AI
-  </div>
+  <div class="bottom-text">Chat Buddy AI</div>
 </footer>
 
 <script>
-const chat = document.getElementById("chat");
-const input = document.getElementById("message");
-const sendButton = document.getElementById("send");
+  const chat = document.getElementById("chat");
+  const input = document.getElementById("messageInput");
+  const sendButton = document.getElementById("sendButton");
+  const newChatButton = document.getElementById("newChat");
 
-let history = [];
+  let messages = [];
 
-function addMessage(text, type) {
-  const welcome = document.getElementById("welcome");
-
-  if (welcome) welcome.remove();
-
-  const message = document.createElement("div");
-  message.className = "message " + type;
-  message.textContent = text;
-
-  chat.appendChild(message);
-  chat.scrollTop = chat.scrollHeight;
-
-  return message;
-}
-
-function saveHistory() {
   try {
-    localStorage.setItem(
-      "chatBuddyHistory",
-      JSON.stringify(history)
-    );
-  } catch (error) {
-    console.log("기록 저장 실패");
-  }
-}
-
-function loadHistory() {
-  try {
-    history = JSON.parse(
+    messages = JSON.parse(
       localStorage.getItem("chatBuddyHistory") || "[]"
     );
 
-    if (!Array.isArray(history)) history = [];
-
-    history.slice(-100).forEach(item => {
-      addMessage(
-        item.text,
-        item.role === "user" ? "user" : "bot"
-      );
-    });
-  } catch (error) {
-    history = [];
+    if (!Array.isArray(messages)) messages = [];
+  } catch {
+    messages = [];
   }
-}
 
-async function sendMessage() {
-  const text = input.value.trim();
-
-  if (!text || sendButton.disabled) return;
-
-  input.value = "";
-
-  addMessage(text, "user");
-
-  history.push({
-    role: "user",
-    text: text
-  });
-
-  saveHistory();
-
-  sendButton.disabled = true;
-
-  const loading = addMessage(
-    "답변을 작성하고 있습니다.",
-    "bot"
-  );
-
-  try {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        message: text
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.error || "AI 연결에 실패했습니다."
+  function saveMessages() {
+    try {
+      localStorage.setItem(
+        "chatBuddyHistory",
+        JSON.stringify(messages)
       );
+    } catch (error) {
+      console.error("대화 저장 실패:", error);
+    }
+  }
+
+  function addMessage(text, type, save = true) {
+    const div = document.createElement("div");
+    div.className = "message " + type;
+    div.textContent = text;
+
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+
+    if (save) {
+      messages.push({ text, type });
+      saveMessages();
     }
 
-    const answer = data.reply || "답변을 받지 못했습니다.";
+    return div;
+  }
 
-    loading.textContent = answer;
+  function showHistory() {
+    chat.innerHTML = "";
 
-    history.push({
-      role: "assistant",
-      text: answer
+    messages.forEach(item => {
+      addMessage(item.text, item.type, false);
     });
-
-    saveHistory();
-
-  } catch (error) {
-    loading.textContent =
-      "오류: " + error.message;
   }
 
-  sendButton.disabled = false;
-  input.focus();
-  chat.scrollTop = chat.scrollHeight;
-}
+  async function sendMessage() {
+    const text = input.value.trim();
 
-function newChat() {
-  if (!confirm("새 대화를 시작하시겠습니까?")) {
-    return;
+    if (!text || sendButton.disabled) return;
+
+    addMessage(text, "user");
+
+    input.value = "";
+    sendButton.disabled = true;
+
+    const loading = document.createElement("div");
+    loading.className = "message bot loading";
+    loading.textContent = "답변을 작성하고 있습니다...";
+    chat.appendChild(loading);
+    chat.scrollTop = chat.scrollHeight;
+
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(
+        () => controller.abort(),
+        90000
+      );
+
+      let response;
+
+      try {
+        response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: text
+          }),
+          signal: controller.signal
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
+
+      const resultText = await response.text();
+
+      let data;
+
+      try {
+        data = JSON.parse(resultText);
+      } catch {
+        throw new Error(
+          "서버에서 올바르지 않은 응답을 받았습니다. Render 배포 상태를 확인해 주세요."
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || "AI 서버 오류가 발생했습니다."
+        );
+      }
+
+      if (!data.reply) {
+        throw new Error("AI 답변이 비어 있습니다.");
+      }
+
+      loading.remove();
+      addMessage(data.reply, "bot");
+
+    } catch (error) {
+      loading.remove();
+
+      let errorMessage;
+
+      if (error.name === "AbortError") {
+        errorMessage =
+          "응답 시간이 초과됐어요. 잠시 후 다시 시도해 주세요.";
+      } else if (error instanceof TypeError) {
+        errorMessage =
+          "서버에 연결할 수 없어요. Render 상태를 확인해 주세요.";
+      } else {
+        errorMessage = error.message;
+      }
+
+      addMessage("오류: " + errorMessage, "bot");
+
+    } finally {
+      sendButton.disabled = false;
+      input.focus();
+    }
   }
 
-  history = [];
-  localStorage.removeItem("chatBuddyHistory");
+  sendButton.addEventListener("click", sendMessage);
 
-  chat.innerHTML = `
-    <div class="welcome" id="welcome">
-      <h1>무엇이든 물어보세요.</h1>
-      <p>Chat Buddy와 자유롭게 대화하세요.</p>
-    </div>
-  `;
-}
+  input.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      sendMessage();
+    }
+  });
 
-input.addEventListener("keydown", function(event) {
-  if (event.key === "Enter" && !event.isComposing) {
-    sendMessage();
-  }
-});
+  newChatButton.addEventListener("click", () => {
+    messages = [];
+    localStorage.removeItem("chatBuddyHistory");
+    chat.innerHTML = "";
+    input.focus();
+  });
 
-loadHistory();
+  showHistory();
 </script>
 
 </body>
