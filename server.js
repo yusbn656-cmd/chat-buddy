@@ -1,140 +1,159 @@
 
 const express = require("express");
-const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+
+app.use((req, res, next) => {
+  console.log("요청:", req.method, req.url);
+  next();
+});
+
 app.use(express.static(__dirname));
 
 // 서버 연결 확인
 app.get("/api/chat", (req, res) => {
-  res.json({ status: "Chat Buddy server is running" });
+  res.json({
+    status: "Chat Buddy server is running"
+  });
 });
 
-// Gemini AI 요청
+// AI 채팅
 app.post("/api/chat", async (req, res) => {
-  try {
-    const message = req.body?.message;
-    const apiKey = process.env.GEMINI_API_KEY;
+  console.log("AI 채팅 요청 도착");
 
-    if (!apiKey) {
-      return res.status(500).json({
-        error: "GEMINI_API_KEY 환경변수를 확인해 주세요."
-      });
-    }
+  const apiKey = process.env.GEMINI_API_KEY;
+  const message = req.body?.message;
 
-    if (!message || !message.trim()) {
-      return res.status(400).json({
-        error: "메시지를 입력해 주세요."
-      });
-    }
+  if (!apiKey) {
+    console.log("API 키가 없습니다.");
+    return res.status(500).json({
+      error: "GEMINI_API_KEY 환경변수를 확인해 주세요."
+    });
+  }
 
-    const url =
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
+  if (!message || !message.trim()) {
+    return res.status(400).json({
+      error: "메시지를 입력해 주세요."
+    });
+  }
 
-    let lastError = "AI 요청에 실패했습니다.";
+  const url =
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
 
-    // 최대 3회 시도
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(
-          () => controller.abort(),
-          45000
-        );
+  let lastError = "AI 요청 실패";
 
-        let response;
+  // 최대 3번 자동 재시도
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    console.log("AI 요청 시도:", attempt);
 
-        try {
-          response = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-goog-api-key": apiKey
-            },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [{ text: message }]
-                }
+    const controller = new AbortController();
+    const timeout = setTimeout(
+      () => controller.abort(),
+      45000
+    );
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                { text: message }
               ]
-            }),
-            signal: controller.signal
-          });
-        } finally {
-          clearTimeout(timeout);
-        }
+            }
+          ]
+        }),
+        signal: controller.signal
+      });
 
-        const data = await response.json();
+      const text = await response.text();
+      let data;
 
-        if (!response.ok) {
-          lastError =
-            data.error?.message || "Gemini API 오류";
+      try {
+        data = JSON.parse(text);
+      } catch {
+        lastError = "AI 서버에서 올바르지 않은 응답을 받았습니다.";
+        console.log(lastError);
+        return res.status(502).json({
+          error: lastError
+        });
+      }
 
-          // 과부하 또는 일시적인 서버 오류만 재시도
-          if (
-            ![429, 500, 502, 503, 504].includes(response.status)
-          ) {
-            return res.status(response.status).json({
-              error: lastError
-            });
-          }
+      if (!response.ok) {
+        lastError =
+          data.error?.message || "Gemini API 오류";
 
-          if (attempt < 3) {
-            await new Promise(resolve =>
-              setTimeout(resolve, attempt * 2000)
-            );
-            continue;
-          }
+        console.log("Gemini 오류:", response.status, lastError);
 
+        if (![429, 500, 502, 503, 504].includes(response.status)) {
           return res.status(response.status).json({
             error: lastError
           });
         }
 
-        const answer =
-          data.candidates?.[0]?.content?.parts
-            ?.map(part => part.text || "")
-            .join("")
-            .trim();
-
-        if (!answer) {
-          return res.status(502).json({
-            error: "AI 답변을 받지 못했습니다."
-          });
-        }
-
-        return res.json({ reply: answer });
-
-      } catch (error) {
-        lastError = error.name === "AbortError"
-          ? "AI 응답 시간이 초과되었습니다."
-          : error.message;
-
         if (attempt < 3) {
           await new Promise(resolve =>
             setTimeout(resolve, attempt * 2000)
           );
+          continue;
         }
+
+        return res.status(503).json({
+          error: lastError
+        });
       }
+
+      const answer =
+        data.candidates?.[0]?.content?.parts
+          ?.map(part => part.text || "")
+          .join("")
+          .trim();
+
+      if (!answer) {
+        return res.status(502).json({
+          error: "AI 답변이 비어 있습니다."
+        });
+      }
+
+      console.log("AI 답변 성공");
+
+      return res.json({
+        reply: answer
+      });
+
+    } catch (error) {
+      lastError =
+        error.name === "AbortError"
+          ? "AI 응답 시간이 초과되었습니다."
+          : error.message;
+
+      console.log("요청 실패:", lastError);
+
+      if (attempt < 3) {
+        await new Promise(resolve =>
+          setTimeout(resolve, attempt * 2000)
+        );
+      }
+
+    } finally {
+      clearTimeout(timeout);
     }
-
-    return res.status(503).json({
-      error: "3회 시도했지만 답변을 받지 못했습니다: " +
-        lastError
-    });
-
-  } catch (error) {
-    console.error("서버 오류:", error);
-
-    return res.status(500).json({
-      error: "서버 내부 오류가 발생했습니다."
-    });
   }
+
+  return res.status(503).json({
+    error: "3번 시도했지만 실패했습니다: " + lastError
+  });
 });
 
+// 서버 실행
 app.listen(PORT, "0.0.0.0", () => {
-  console.log("Chat Buddy 서버 실행 중: " + PORT);
+  console.log("Chat Buddy 서버 실행 중:", PORT);
 });
