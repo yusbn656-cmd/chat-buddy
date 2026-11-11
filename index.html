@@ -2,138 +2,139 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat Buddy</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Buddy</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<style>
+* {
+  box-sizing: border-box;
+}
 
-    body {
-      margin: 0;
-      background: #111;
-      color: white;
-      font-family: Arial, sans-serif;
-    }
+body {
+  margin: 0;
+  background: #111;
+  color: white;
+  font-family: Arial, sans-serif;
+}
 
-    header {
-      height: 90px;
-      padding: 20px;
-      background: #1c1c1c;
-      border-bottom: 1px solid #333;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+header {
+  height: 70px;
+  padding: 12px 16px;
+  background: #1c1c1c;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-    header h1 {
-      font-size: 28px;
-      margin: 0;
-    }
+header h1 {
+  font-size: 21px;
+  margin: 0;
+}
 
-    button {
-      cursor: pointer;
-      border: none;
-    }
+button {
+  cursor: pointer;
+  border: none;
+}
 
-    #newChat {
-      padding: 15px 20px;
-      border-radius: 15px;
-      background: #333;
-      color: white;
-      border: 1px solid #555;
-      font-size: 16px;
-    }
+#newChat {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #333;
+  color: white;
+  border: 1px solid #555;
+  font-size: 14px;
+}
 
-    #chat {
-      height: calc(100dvh - 250px);
-      overflow-y: auto;
-      padding: 25px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
+#chat {
+  height: calc(100dvh - 190px);
+  overflow-y: auto;
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 
-    .message {
-      max-width: 85%;
-      padding: 18px 20px;
-      border-radius: 25px;
-      font-size: 18px;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
+.message {
+  max-width: 85%;
+  padding: 12px 15px;
+  border-radius: 19px;
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 
-    .user {
-      align-self: flex-end;
-      background: #f1f1f1;
-      color: #111;
-    }
+.user {
+  align-self: flex-end;
+  background: #f1f1f1;
+  color: #111;
+}
 
-    .bot {
-      align-self: flex-start;
-      background: #292929;
-      color: white;
-    }
+.bot {
+  align-self: flex-start;
+  background: #292929;
+  color: white;
+}
 
-    .loading {
-      color: #aaa;
-      font-size: 15px;
-    }
+.loading {
+  color: #aaa;
+  font-size: 13px;
+}
 
-    footer {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      padding: 15px 20px 25px;
-      background: #1c1c1c;
-      border-top: 1px solid #333;
-    }
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 10px 14px 16px;
+  background: #1c1c1c;
+  border-top: 1px solid #333;
+}
 
-    .input-area {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px;
-      background: #292929;
-      border: 1px solid #444;
-      border-radius: 25px;
-    }
+.input-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px;
+  background: #292929;
+  border: 1px solid #444;
+  border-radius: 20px;
+}
 
-    #messageInput {
-      flex: 1;
-      min-width: 0;
-      padding: 12px;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: white;
-      font-size: 17px;
-    }
+#messageInput {
+  flex: 1;
+  min-width: 0;
+  padding: 10px;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  font-size: 15px;
+}
 
-    #sendButton {
-      width: 60px;
-      height: 60px;
-      flex-shrink: 0;
-      border-radius: 18px;
-      background: white;
-      color: black;
-      font-size: 30px;
-    }
+#sendButton {
+  width: 45px;
+  height: 45px;
+  flex-shrink: 0;
+  border-radius: 13px;
+  background: white;
+  color: black;
+  font-size: 24px;
+}
 
-    #sendButton:disabled {
-      opacity: 0.5;
-    }
+#sendButton:disabled {
+  opacity: 0.5;
+}
 
-    .bottom-text {
-      text-align: center;
-      color: #777;
-      margin-top: 15px;
-    }
-  </style>
+.bottom-text {
+  text-align: center;
+  color: #777;
+  margin-top: 10px;
+  font-size: 13px;
+}
+</style>
 </head>
 
 <body>
@@ -159,80 +160,68 @@
 </footer>
 
 <script>
-  const chat = document.getElementById("chat");
-  const input = document.getElementById("messageInput");
-  const sendButton = document.getElementById("sendButton");
-  const newChatButton = document.getElementById("newChat");
+const chat = document.getElementById("chat");
+const input = document.getElementById("messageInput");
+const sendButton = document.getElementById("sendButton");
+const newChatButton = document.getElementById("newChat");
 
-  let messages = [];
+let messages = [];
 
-  try {
-    messages = JSON.parse(
-      localStorage.getItem("chatBuddyHistory") || "[]"
-    );
+try {
+  messages = JSON.parse(
+    localStorage.getItem("chatBuddyHistory") || "[]"
+  );
 
-    if (!Array.isArray(messages)) messages = [];
-  } catch {
-    messages = [];
+  if (!Array.isArray(messages)) messages = [];
+} catch {
+  messages = [];
+}
+
+function saveMessages() {
+  localStorage.setItem(
+    "chatBuddyHistory",
+    JSON.stringify(messages)
+  );
+}
+
+function addMessage(text, type, save = true) {
+  const div = document.createElement("div");
+  div.className = "message " + type;
+  div.textContent = text;
+
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+
+  if (save) {
+    messages.push({ text, type });
+    saveMessages();
   }
 
-  function saveMessages() {
-    try {
-      localStorage.setItem(
-        "chatBuddyHistory",
-        JSON.stringify(messages)
-      );
-    } catch (error) {
-      console.error("대화 저장 실패:", error);
-    }
-  }
+  return div;
+}
 
-  function addMessage(text, type, save = true) {
-    const div = document.createElement("div");
-    div.className = "message " + type;
-    div.textContent = text;
+function showHistory() {
+  chat.innerHTML = "";
 
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
+  messages.forEach(item => {
+    addMessage(item.text, item.type, false);
+  });
+}
 
-    if (save) {
-      messages.push({ text, type });
-      saveMessages();
-    }
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-    return div;
-  }
+async function requestAI(text) {
+  let lastError;
 
-  function showHistory() {
-    chat.innerHTML = "";
-
-    messages.forEach(item => {
-      addMessage(item.text, item.type, false);
-    });
-  }
-
-  async function sendMessage() {
-    const text = input.value.trim();
-
-    if (!text || sendButton.disabled) return;
-
-    addMessage(text, "user");
-
-    input.value = "";
-    sendButton.disabled = true;
-
-    const loading = document.createElement("div");
-    loading.className = "message bot loading";
-    loading.textContent = "답변을 작성하고 있습니다...";
-    chat.appendChild(loading);
-    chat.scrollTop = chat.scrollHeight;
-
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(
-        () => controller.abort(),
-        90000
-      );
+
+      const timeout = setTimeout(() => {
+        controller.abort();
+      }, 90000);
 
       let response;
 
@@ -251,70 +240,111 @@
         clearTimeout(timeout);
       }
 
-      const resultText = await response.text();
+      const responseText = await response.text();
 
       let data;
 
       try {
-        data = JSON.parse(resultText);
+        data = JSON.parse(responseText);
       } catch {
         throw new Error(
-          "서버에서 올바르지 않은 응답을 받았습니다. Render 배포 상태를 확인해 주세요."
+          "서버 응답을 읽을 수 없습니다. Render 서버를 확인해 주세요."
         );
       }
 
       if (!response.ok) {
-        throw new Error(
-          data.error || "AI 서버 오류가 발생했습니다."
+        const error = new Error(
+          data.error || "AI 서버 오류"
         );
+
+        error.retryable =
+          response.status === 429 ||
+          response.status >= 500;
+
+        throw error;
       }
 
       if (!data.reply) {
-        throw new Error("AI 답변이 비어 있습니다.");
+        throw new Error("AI 답변을 받지 못했어요.");
       }
 
-      loading.remove();
-      addMessage(data.reply, "bot");
+      return data.reply;
 
     } catch (error) {
-      loading.remove();
+      lastError = error;
 
-      let errorMessage;
+      const retryable =
+        error.name === "AbortError" ||
+        error instanceof TypeError ||
+        error.retryable === true;
 
-      if (error.name === "AbortError") {
-        errorMessage =
-          "응답 시간이 초과됐어요. 잠시 후 다시 시도해 주세요.";
-      } else if (error instanceof TypeError) {
-        errorMessage =
-          "서버에 연결할 수 없어요. Render 상태를 확인해 주세요.";
-      } else {
-        errorMessage = error.message;
+      if (!retryable || attempt === 2) {
+        throw error;
       }
 
-      addMessage("오류: " + errorMessage, "bot");
-
-    } finally {
-      sendButton.disabled = false;
-      input.focus();
+      await wait((attempt + 1) * 1500);
     }
   }
 
-  sendButton.addEventListener("click", sendMessage);
+  throw lastError;
+}
 
-  input.addEventListener("keydown", event => {
-    if (event.key === "Enter") {
-      sendMessage();
+async function sendMessage() {
+  const text = input.value.trim();
+
+  if (!text || sendButton.disabled) return;
+
+  addMessage(text, "user");
+  input.value = "";
+  sendButton.disabled = true;
+
+  const loading = addMessage(
+    "답변을 작성하고 있습니다...",
+    "bot",
+    false
+  );
+
+  try {
+    const reply = await requestAI(text);
+
+    loading.remove();
+    addMessage(reply, "bot");
+
+  } catch (error) {
+    loading.remove();
+
+    let message = error.message;
+
+    if (error.name === "AbortError") {
+      message = "응답 시간이 초과됐어요. 다시 시도해 주세요.";
+    } else if (error instanceof TypeError) {
+      message = "서버에 연결할 수 없어요. Render 상태를 확인해 주세요.";
     }
-  });
 
-  newChatButton.addEventListener("click", () => {
-    messages = [];
-    localStorage.removeItem("chatBuddyHistory");
-    chat.innerHTML = "";
+    addMessage("오류: " + message, "bot");
+
+  } finally {
+    sendButton.disabled = false;
     input.focus();
-  });
+  }
+}
 
-  showHistory();
+sendButton.addEventListener("click", sendMessage);
+
+input.addEventListener("keydown", event => {
+  if (event.key === "Enter") {
+    sendMessage();
+  }
+});
+
+newChatButton.addEventListener("click", () => {
+  messages = [];
+  localStorage.removeItem("chatBuddyHistory");
+  chat.innerHTML = "";
+  input.focus();
+});
+
+showHistory();
 </script>
 
 </body>
