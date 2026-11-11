@@ -4,177 +4,221 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
-
-app.use((req, res, next) => {
-  console.log("요청:", req.method, req.url);
-  next();
-});
-
+app.use(express.json({ limit: "1mb" }));
 app.use(express.static(__dirname));
 
-// 서버 연결 확인
+// 서버 상태 확인
 app.get("/api/chat", (req, res) => {
   res.json({
     status: "Chat Buddy server is running"
   });
 });
 
-// 재시도 시간 읽기
-function getRetryMessage(message) {
-  const match = message.match(
-    /Please retry in ([0-9hms. ]+)/i
-  );
+// AI 요청 함수
+async function requestAI(url, headers, body) {
+  const controller = new AbortController();
 
-  if (!match) {
-    return "잠시 후 다시 시도해 주세요.";
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 45000);
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+
+    const text = await response.text();
+
+    let data;
+
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error("AI 서버 응답을 읽을 수 없습니다.");
+    }
+
+    if (!response.ok) {
+      const error = new Error(
+        data.error?.message ||
+        data.error ||
+        "AI 요청에 실패했습니다."
+      );
+
+      error.status = response.status;
+      throw error;
+    }
+
+    return data;
+
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const time = match[1];
-  const hours = time.match(/([\d.]+)h/);
-  const minutes = time.match(/([\d.]+)m/);
-
-  let result = [];
-
-  if (hours) result.push(Math.ceil(Number(hours[1])) + "시간");
-  if (minutes) result.push(Math.ceil(Number(minutes[1])) + "분");
-
-  if (result.length === 0) {
-    return "잠시 후 다시 시도해 주세요.";
-  }
-
-  return result.join(" ") + " 후 다시 시도해 주세요.";
 }
 
-// AI 채팅
-app.post("/api/chat", async (req, res) => {
-  console.log("AI 채팅 요청 도착");
-
+// Gemini 요청
+async function askGemini(message) {
   const apiKey = process.env.GEMINI_API_KEY;
-  const message = req.body?.message;
 
   if (!apiKey) {
-    return res.status(500).json({
-      error: "서버에 Gemini API 키가 설정되지 않았습니다."
-    });
-  }
-
-  if (!message || !message.trim()) {
-    return res.status(400).json({
-      error: "메시지를 입력해 주세요."
-    });
+    throw new Error("Gemini API 키가 없습니다.");
   }
 
   const url =
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
 
-  // 최대 3회 시도
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    const controller = new AbortController();
-    const timeout = setTimeout(
-      () => controller.abort(),
-      45000
-    );
-
-    try {
-      console.log("AI 요청 시도:", attempt);
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: message }]
-            }
+  const data = await requestAI(
+    url,
+    {
+      "Content-Type": "application/json",
+      "x-goog-api-key": apiKey
+    },
+    {
+      contents: [
+        {
+          parts: [
+            { text: message }
           ]
-        }),
-        signal: controller.signal
-      });
-
-      const text = await response.text();
-      let data;
-
-      try {
-        data = JSON.parse(text);
-      } catch {
-        return res.status(502).json({
-          error: "AI 서버에서 올바르지 않은 응답을 받았습니다."
-        });
-      }
-
-      if (!response.ok) {
-        const errorMessage =
-          data.error?.message || "AI 요청에 실패했습니다.";
-
-        console.log("Gemini 오류:", response.status, errorMessage);
-
-        // 사용량 초과: 재시도하지 않음
-        if (response.status === 429) {
-          const retryMessage = getRetryMessage(errorMessage);
-
-          return res.status(429).json({
-            error:
-              "Gemini 무료 사용량을 초과했습니다. " +
-              retryMessage
-          });
         }
+      ]
+    }
+  );
 
-        // 일시적인 서버 오류만 재시도
-        if ([500, 502, 503, 504].includes(response.status)) {
-          if (attempt < 3) {
-            await new Promise(resolve =>
-              setTimeout(resolve, attempt * 2000)
-            );
-            continue;
-          }
+  const answer = data.candidates?.[0]?.content?.parts
+    ?.map(part => part.text || "")
+    .join("")
+    .trim();
+
+  if (!answer) {
+    throw new Error("Gemini 답변이 비어 있습니다.");
+  }
+
+  return answer;
+}
+
+// Groq 요청
+async function askGroq(message) {
+  const apiKey = process.env.GROQ_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("Groq API 키가 없습니다.");
+  }
+
+  const url =
+    "https://api.groq.com/openai/v1/chat/completions";
+
+  const data = await requestAI(
+    url,
+    {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
+    },
+    {
+      model: "openai/gpt-oss-20b",
+      messages: [
+        {
+          role: "system",
+          content:
+            "너는 Chat Buddy라는 친절한 AI 챗봇이야. 한국어로 자연스럽고 이해하기 쉽게 답변해."
+        },
+        {
+          role: "user",
+          content: message
         }
+      ],
+      max_completion_tokens: 2048
+    }
+  );
 
-        return res.status(response.status).json({
-          error: errorMessage
-        });
-      }
+  const answer =
+    data.choices?.[0]?.message?.content?.trim();
 
-      const answer =
-        data.candidates?.[0]?.content?.parts
-          ?.map(part => part.text || "")
-          .join("")
-          .trim();
+  if (!answer) {
+    throw new Error("Groq 답변이 비어 있습니다.");
+  }
 
-      if (!answer) {
-        return res.status(502).json({
-          error: "AI 답변을 받지 못했습니다."
-        });
-      }
+  return answer;
+}
 
-      console.log("AI 답변 성공");
+// 채팅 API
+app.post("/api/chat", async (req, res) => {
+  const message = req.body?.message;
+
+  if (
+    typeof message !== "string" ||
+    !message.trim()
+  ) {
+    return res.status(400).json({
+      error: "메시지를 입력해 주세요."
+    });
+  }
+
+  console.log("Chat Buddy 요청 도착");
+
+  // 1. Gemini 먼저 시도
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      console.log("Gemini 사용 중...");
+
+      const reply = await askGemini(message);
+
+      console.log("Gemini 답변 성공");
 
       return res.json({
-        reply: answer
+        reply,
+        provider: "Gemini"
       });
 
     } catch (error) {
-      console.log("요청 실패:", error.message);
-
-      if (attempt === 3) {
-        return res.status(503).json({
-          error: "서버 연결에 실패했습니다. 잠시 후 다시 시도해 주세요."
-        });
-      }
-
-      await new Promise(resolve =>
-        setTimeout(resolve, attempt * 2000)
+      console.log(
+        "Gemini 실패:",
+        error.status || "",
+        error.message
       );
-
-    } finally {
-      clearTimeout(timeout);
+      console.log("Groq로 자동 전환합니다.");
     }
   }
+
+  // 2. Gemini 실패 시 Groq 사용
+  if (process.env.GROQ_API_KEY) {
+    try {
+      console.log("Groq 사용 중...");
+
+      const reply = await askGroq(message);
+
+      console.log("Groq 답변 성공");
+
+      return res.json({
+        reply,
+        provider: "Groq"
+      });
+
+    } catch (error) {
+      console.log(
+        "Groq 실패:",
+        error.status || "",
+        error.message
+      );
+
+      return res.status(502).json({
+        error:
+          "Gemini와 Groq 모두 답변하지 못했습니다. 잠시 후 다시 시도해 주세요."
+      });
+    }
+  }
+
+  return res.status(503).json({
+    error:
+      "AI API 키가 설정되지 않았습니다. Render 환경변수를 확인해 주세요."
+  });
 });
 
+// 서버 실행
 app.listen(PORT, "0.0.0.0", () => {
-  console.log("Chat Buddy 서버 실행 중:", PORT);
+  console.log(
+    "Chat Buddy 서버 실행 중:",
+    PORT
+  );
 });
