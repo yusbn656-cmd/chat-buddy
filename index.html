@@ -4,10 +4,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="google-site-verification" content="REEVgaK7XkXKxosq1PzyGAIAUjG6U8Ap4uR3q8XDXbQ">
+
+<!-- Google Search Console 인증 -->
+<meta name="google-site-verification" content="HygUHkp4Auu9Of941AEOJ8Qx_HEE8EcWiyW7IfpOtWM" />
+
 <meta name="description" content="Chat Buddy - 무엇이든 편하게 질문하고 AI와 대화해 보세요.">
 <meta name="robots" content="index,follow">
 <title>Chat Buddy - AI 친구</title>
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#111;color:#fff;font-family:Arial,sans-serif}
@@ -54,6 +58,7 @@ footer{background:#1c1c1c;border-top:1px solid #333;padding:12px}
 }
 </style>
 </head>
+
 <body>
 
 <section id="landing">
@@ -92,6 +97,7 @@ footer{background:#1c1c1c;border-top:1px solid #333;padding:12px}
    <button class="side-btn" id="logoutButton">로그아웃</button>
   </div>
  </aside>
+
  <main id="main">
   <header>
    <button class="header-btn" id="menuButton">메뉴</button>
@@ -154,18 +160,22 @@ $("firstQuestion").onkeydown=e=>{
 function storageKey(){
  return "chatBuddyConversations_"+currentUser.uid;
 }
+
 function saveAll(){
  localStorage.setItem(storageKey(),JSON.stringify(conversations));
 }
+
 function loadAll(){
  try{
   conversations=JSON.parse(localStorage.getItem(storageKey())||"[]");
   if(!Array.isArray(conversations))conversations=[];
  }catch(e){conversations=[]}
 }
+
 function currentConversation(){
  return conversations.find(c=>c.id===currentId);
 }
+
 function saveConversation(){
  const c=currentConversation();
  if(!c)return;
@@ -173,12 +183,14 @@ function saveConversation(){
  saveAll();
  renderHistory();
 }
+
 function addMessage(text,type,save=true){
  const div=document.createElement("div");
  div.className="message "+type;
  div.textContent=text;
  $("chat").appendChild(div);
  $("chat").scrollTop=$("chat").scrollHeight;
+
  if(save){
   const c=currentConversation();
   if(c){
@@ -189,15 +201,18 @@ function addMessage(text,type,save=true){
  }
  return div;
 }
+
 function showConversation(){
  $("chat").innerHTML="";
  const c=currentConversation();
  if(c)c.messages.forEach(m=>addMessage(m.text,m.type,false));
 }
+
 function renderHistory(){
  const list=$("historyList");
  const keyword=$("searchInput").value.toLowerCase();
  list.innerHTML="";
+
  [...conversations].sort((a,b)=>b.updated-a.updated)
  .filter(c=>c.title.toLowerCase().includes(keyword))
  .forEach(c=>{
@@ -212,8 +227,14 @@ function renderHistory(){
   list.appendChild(btn);
  });
 }
+
 function createNewChat(){
- const c={id:Date.now().toString(),title:"새 대화",messages:[],updated:Date.now()};
+ const c={
+  id:Date.now().toString(),
+  title:"새 대화",
+  messages:[],
+  updated:Date.now()
+ };
  conversations.push(c);
  currentId=c.id;
  saveAll();
@@ -222,18 +243,27 @@ function createNewChat(){
  $("messageInput").focus();
  $("sidebar").classList.remove("open");
 }
+
 function enterApp(user){
  currentUser=user;
  $("landing").classList.add("hidden");
  $("loginScreen").classList.add("hidden");
  $("app").classList.remove("hidden");
- $("profileName").textContent=user.isAnonymous?"비회원 사용자":(user.displayName||user.email||"Google 사용자");
+
+ $("profileName").textContent=user.isAnonymous
+  ?"비회원 사용자"
+  :(user.displayName||user.email||"Google 사용자");
+
  loadAll();
+
  if(conversations.length){
   conversations.sort((a,b)=>b.updated-a.updated);
   currentId=conversations[0].id;
   showConversation();
- }else createNewChat();
+ }else{
+  createNewChat();
+ }
+
  renderHistory();
 
  if(!pendingSent){
@@ -266,6 +296,7 @@ $("googleLogin").onclick=async()=>{
   $("loginError").textContent="로그인 오류: "+e.message;
  }
 };
+
 $("guestLogin").onclick=async()=>{
  $("loginError").textContent="로그인 중...";
  try{
@@ -275,12 +306,14 @@ $("guestLogin").onclick=async()=>{
   $("loginError").textContent="로그인 오류: "+e.message;
  }
 };
+
 $("logoutButton").onclick=async()=>{
  if(confirm("로그아웃할까요?")){
   pendingSent=false;
   await auth.signOut();
  }
 };
+
 $("menuButton").onclick=()=>$("sidebar").classList.toggle("open");
 $("newChat").onclick=createNewChat;
 $("sideNewChat").onclick=createNewChat;
@@ -291,6 +324,7 @@ $("libraryButton").onclick=()=>alert("보관함은 다음 업데이트에서 추
 async function requestAI(message){
  const controller=new AbortController();
  const timeout=setTimeout(()=>controller.abort(),60000);
+
  try{
   const response=await fetch("/api/chat",{
    method:"POST",
@@ -298,12 +332,19 @@ async function requestAI(message){
    body:JSON.stringify({message}),
    signal:controller.signal
   });
+
   const responseText=await response.text();
   let data;
-  try{data=JSON.parse(responseText)}
-  catch(e){throw new Error("서버 응답을 읽을 수 없습니다.")}
+
+  try{
+   data=JSON.parse(responseText);
+  }catch(e){
+   throw new Error("서버 응답을 읽을 수 없습니다.");
+  }
+
   if(!response.ok)throw new Error(data.error||"AI 서버 오류");
   if(!data.reply)throw new Error("AI 답변을 받지 못했어요.");
+
   return data.reply;
  }finally{
   clearTimeout(timeout);
@@ -313,11 +354,14 @@ async function requestAI(message){
 async function sendMessage(){
  const text=$("messageInput").value.trim();
  if(!text||$("sendButton").disabled)return;
+
  addMessage(text,"user");
  $("messageInput").value="";
  $("sendButton").disabled=true;
+
  const loading=addMessage("답변을 작성하고 있습니다...","bot",false);
  loading.classList.add("loading");
+
  try{
   const reply=await requestAI(text);
   loading.remove();
@@ -325,13 +369,16 @@ async function sendMessage(){
  }catch(error){
   loading.remove();
   let msg=error.message;
-  if(error.name==="AbortError")msg="응답 시간이 초과됐어요. 다시 시도해 주세요.";
+  if(error.name==="AbortError"){
+   msg="응답 시간이 초과됐어요. 다시 시도해 주세요.";
+  }
   addMessage("오류: "+msg,"bot");
  }finally{
   $("sendButton").disabled=false;
   $("messageInput").focus();
  }
 }
+
 $("sendButton").onclick=sendMessage;
 $("messageInput").onkeydown=e=>{
  if(e.key==="Enter")sendMessage();
