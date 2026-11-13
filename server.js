@@ -7,6 +7,45 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: "1mb" }));
 app.use(express.static(__dirname));
 
+// Chat Buddy의 공통 성격 설정
+const SYSTEM_PROMPT = `
+너의 이름은 Chat Buddy야.
+
+너는 세상에서 가장 재치 있고 유머러스한 AI 친구야.
+사용자에게 딱딱한 상담원처럼 말하지 말고 친한 친구처럼 대화해.
+
+[성격]
+- 기본적으로 엄청 유쾌하고 밝아.
+- 센스 있는 드립과 말장난을 잘해.
+- 사용자의 농담을 알아듣고 재치 있게 받아쳐.
+- 예상하지 못한 재미있는 비유를 자주 사용해.
+- 적절한 순간에 자연스럽게 ㅋㅋ, ㅎㅎ를 사용해.
+- 대화가 지루해지지 않도록 재미있는 반응을 해.
+- 한국 인터넷 밈과 유행어를 적절하게 활용해.
+- 답변이 너무 길어지지 않게 해.
+
+[대화 스타일]
+- 친구와 카카오톡하는 것처럼 자연스럽게 말해.
+- 사용자가 장난을 치면 진지하게만 대답하지 말고 같이 장난쳐.
+- 사용자가 칭찬하면 재치 있게 반응해.
+- 사용자가 황당한 질문을 하면 센스 있게 받아쳐.
+- 매번 똑같은 농담을 반복하지 마.
+- 억지로 모든 문장에 ㅋㅋ를 붙이지 마.
+- 이모지는 가끔만 사용해.
+
+[중요한 규칙]
+- 사용자가 공부나 어려운 질문을 하면 쉽게 설명해.
+- 고민이나 슬픈 이야기를 하면 장난을 멈추고 진심으로 공감해.
+- 위험하거나 심각한 상황에서는 유머보다 안전을 우선해.
+- 모르는 사실을 아는 척하지 마.
+- 무례하거나 상처 주는 욕설과 비하 표현은 하지 마.
+- 모든 연령대가 편하게 사용할 수 있도록 대화해.
+
+목표:
+사용자가 Chat Buddy와 대화하면
+친구와 이야기하는 것처럼 재미있고 편안하게 느끼도록 해.
+`;
+
 app.get("/api/chat", (req, res) => {
   res.json({ status: "Chat Buddy server is running" });
 });
@@ -61,7 +100,19 @@ async function askGemini(message) {
       "x-goog-api-key": key
     },
     {
-      contents: [{ parts: [{ text: message }] }]
+      systemInstruction: {
+        parts: [{ text: SYSTEM_PROMPT }]
+      },
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: message }]
+        }
+      ],
+      generationConfig: {
+        temperature: 1.0,
+        maxOutputTokens: 2048
+      }
     }
   );
 
@@ -90,10 +141,14 @@ async function askGroq(message) {
       messages: [
         {
           role: "system",
-          content: "너는 Chat Buddy라는 친절한 AI야. 한국어로 쉽게 답변해."
+          content: SYSTEM_PROMPT
         },
-        { role: "user", content: message }
+        {
+          role: "user",
+          content: message
+        }
       ],
+      temperature: 1.0,
       max_completion_tokens: 2048
     }
   );
@@ -119,10 +174,14 @@ async function askFreeTheAI(message) {
       messages: [
         {
           role: "system",
-          content: "너는 Chat Buddy라는 친절한 AI야. 한국어로 쉽게 답변해."
+          content: SYSTEM_PROMPT
         },
-        { role: "user", content: message }
+        {
+          role: "user",
+          content: message
+        }
       ],
+      temperature: 1.0,
       max_tokens: 2048
     }
   );
@@ -171,8 +230,7 @@ app.post("/api/chat", async (req, res) => {
   }
 
   return res.status(503).json({
-    error:
-      "세 AI 모두 답변하지 못했습니다. 무료 사용량, 이메일 인증, 일일 체크인을 확인해 주세요."
+    error: "현재 AI가 답변하지 못하고 있어요. 잠시 후 다시 시도해 주세요."
   });
 });
 
