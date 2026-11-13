@@ -10,31 +10,92 @@
 body{margin:0;background:#111;color:white;font-family:Arial,sans-serif}
 button{cursor:pointer;border:0}
 .hidden{display:none!important}
-#loginScreen{position:fixed;inset:0;background:#111;display:flex;align-items:center;justify-content:center;padding:20px}
-.login-box{width:100%;max-width:380px;background:#1c1c1c;border:1px solid #333;border-radius:18px;padding:28px;text-align:center}
-.login-btn{width:100%;padding:14px;margin-top:12px;border-radius:10px;background:#eee;color:#111;font-weight:bold}
+
+#loginScreen{
+ position:fixed;inset:0;background:#111;
+ display:flex;align-items:center;justify-content:center;padding:20px
+}
+.login-box{
+ width:100%;max-width:380px;background:#1c1c1c;
+ border:1px solid #333;border-radius:18px;padding:28px;text-align:center
+}
+.login-btn{
+ width:100%;padding:14px;margin-top:12px;border-radius:10px;
+ background:#eee;color:#111;font-weight:bold
+}
 .guest-btn{background:#333;color:white}
+
 #app{display:flex;height:100dvh;overflow:hidden}
-#sidebar{width:250px;flex-shrink:0;background:#191919;border-right:1px solid #333;padding:15px;display:flex;flex-direction:column}
-.side-btn{width:100%;padding:12px;text-align:left;background:transparent;color:#ddd;border-radius:9px;margin-bottom:5px}
+#sidebar{
+ width:250px;flex-shrink:0;background:#191919;
+ border-right:1px solid #333;padding:15px;
+ display:flex;flex-direction:column
+}
+.side-btn{
+ width:100%;padding:12px;text-align:left;
+ background:transparent;color:#ddd;border-radius:9px;margin-bottom:5px
+}
+.side-btn:hover,.history-item:hover{background:#303030}
 #historyList{overflow-y:auto;flex:1;margin-top:12px}
-.history-item{width:100%;padding:11px;text-align:left;background:transparent;color:#bbb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.history-item{
+ width:100%;padding:11px;text-align:left;background:transparent;
+ color:#bbb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+
 #main{flex:1;min-width:0;display:flex;flex-direction:column}
-header{height:65px;padding:12px 16px;background:#1c1c1c;border-bottom:1px solid #333;display:flex;align-items:center;gap:12px}
+header{
+ height:65px;padding:12px 16px;background:#1c1c1c;
+ border-bottom:1px solid #333;display:flex;align-items:center;gap:12px
+}
 header h2{font-size:19px;margin:0;flex:1}
-#menuButton,#newChat{padding:10px 13px;border-radius:9px;background:#333;color:white}
-#chat{flex:1;overflow-y:auto;padding:18px 14px;display:flex;flex-direction:column;gap:14px}
-.message{max-width:85%;padding:12px 15px;border-radius:19px;font-size:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+#menuButton,#newChat{
+ padding:10px 13px;border-radius:9px;background:#333;color:white
+}
+
+#chat{
+ flex:1;overflow-y:auto;padding:18px 14px;
+ display:flex;flex-direction:column;gap:14px
+}
+.message{
+ max-width:85%;padding:12px 15px;border-radius:19px;
+ font-size:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere
+}
 .user{align-self:flex-end;background:#eee;color:#111}
 .bot{align-self:flex-start;background:#292929;color:white}
-footer{padding:10px 14px 16px;background:#1c1c1c;border-top:1px solid #333}
-.input-area{display:flex;gap:8px;padding:7px;background:#292929;border:1px solid #444;border-radius:20px}
-#messageInput{flex:1;min-width:0;padding:10px;background:transparent;border:0;outline:0;color:white;font-size:15px}
-#sendButton{width:45px;height:45px;border-radius:13px;background:white;color:black;font-size:24px}
-#sendButton:disabled{opacity:.5}
+
+/* 답변 작성 중 표시 */
+.message.loading{
+ opacity:.38;
+ animation:pulse 1.2s ease-in-out infinite alternate;
+}
+@keyframes pulse{
+ from{opacity:.25}
+ to{opacity:.55}
+}
+
+footer{
+ padding:10px 14px 16px;background:#1c1c1c;border-top:1px solid #333
+}
+.input-area{
+ display:flex;gap:8px;padding:7px;background:#292929;
+ border:1px solid #444;border-radius:20px
+}
+#messageInput{
+ flex:1;min-width:0;padding:10px;background:transparent;
+ border:0;outline:0;color:white;font-size:15px
+}
+#sendButton{
+ width:45px;height:45px;border-radius:13px;
+ background:white;color:black;font-size:24px
+}
+#sendButton:disabled{opacity:.5;cursor:wait}
+
 @media(max-width:650px){
-#sidebar{position:fixed;z-index:20;top:0;bottom:0;left:0;transform:translateX(-100%);transition:transform .2s}
-#sidebar.open{transform:translateX(0)}
+ #sidebar{
+  position:fixed;z-index:20;top:0;bottom:0;left:0;
+  transform:translateX(-100%);transition:transform .2s
+ }
+ #sidebar.open{transform:translateX(0)}
 }
 </style>
 </head>
@@ -65,6 +126,7 @@ footer{padding:10px 14px 16px;background:#1c1c1c;border-top:1px solid #333}
    <button class="side-btn" id="logoutButton">로그아웃</button>
   </div>
  </aside>
+
  <main id="main">
   <header>
    <button id="menuButton">메뉴</button>
@@ -166,7 +228,12 @@ function renderHistory(){
  });
 }
 function createNewChat(){
- const c={id:Date.now().toString(),title:"새 대화",messages:[],updated:Date.now()};
+ const c={
+  id:Date.now().toString(),
+  title:"새 대화",
+  messages:[],
+  updated:Date.now()
+ };
  conversations.push(c);
  currentId=c.id;
  saveAll();
@@ -179,17 +246,20 @@ function enterApp(user){
  currentUser=user;
  $("loginScreen").classList.add("hidden");
  $("app").classList.remove("hidden");
- $("profileName").textContent=user.isAnonymous?"비회원 사용자":(user.displayName||user.email||"Google 사용자");
+ $("profileName").textContent=user.isAnonymous
+  ?"비회원 사용자"
+  :(user.displayName||user.email||"Google 사용자");
  loadAll();
  if(conversations.length){
   conversations.sort((a,b)=>b.updated-a.updated);
   currentId=conversations[0].id;
   showConversation();
- }else createNewChat();
+ }else{
+  createNewChat();
+ }
  renderHistory();
 }
 
-/* 로그인 상태 확인 */
 auth.onAuthStateChanged(user=>{
  if(user){
   enterApp(user);
@@ -200,18 +270,16 @@ auth.onAuthStateChanged(user=>{
  }
 });
 
-/* Google 로그인 */
 $("googleLogin").onclick=async()=>{
  $("loginError").textContent="로그인 중...";
  try{
   await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
   await auth.signInWithPopup(provider);
  }catch(e){
-  $("loginError").textContent="로그인 오류: "+e.code+" / "+e.message;
+  $("loginError").textContent="로그인 오류: "+e.message;
  }
 };
 
-/* 비회원 로그인 */
 $("guestLogin").onclick=async()=>{
  $("loginError").textContent="로그인 중...";
  try{
@@ -225,74 +293,88 @@ $("guestLogin").onclick=async()=>{
 $("logoutButton").onclick=async()=>{
  if(confirm("로그아웃할까요?"))await auth.signOut();
 };
+
 $("menuButton").onclick=()=>$("sidebar").classList.toggle("open");
 $("newChat").onclick=createNewChat;
 $("sideNewChat").onclick=createNewChat;
 $("searchToggle").onclick=()=>$("searchInput").classList.toggle("hidden");
 $("searchInput").oninput=renderHistory;
 $("libraryButton").onclick=()=>alert("보관함은 다음 업데이트에서 추가됩니다.");
-$("settingsButton").onclick=()=>alert("현재 로그인 방식: "+(currentUser.isAnonymous?"비회원":"Google"));
+$("settingsButton").onclick=()=>alert(
+ "현재 로그인 방식: "+(currentUser.isAnonymous?"비회원":"Google")
+);
 
-function wait(ms){
- return new Promise(resolve=>setTimeout(resolve,ms));
-}
+/* AI 서버 요청 */
 async function requestAI(message){
- let lastError;
- for(let attempt=0;attempt<3;attempt++){
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),60000);
+
+ try{
+  const response=await fetch("/api/chat",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({message}),
+   signal:controller.signal
+  });
+
+  const responseText=await response.text();
+  let data;
+
   try{
-   const controller=new AbortController();
-   const timeout=setTimeout(()=>controller.abort(),90000);
-   let response;
-   try{
-    response=await fetch("/api/chat",{
-     method:"POST",
-     headers:{"Content-Type":"application/json"},
-     body:JSON.stringify({message}),
-     signal:controller.signal
-    });
-   }finally{clearTimeout(timeout);}
-   const responseText=await response.text();
-   let data;
-   try{data=JSON.parse(responseText);}
-   catch{throw new Error("서버 응답을 읽을 수 없습니다.");}
-   if(!response.ok){
-    const error=new Error(data.error||"AI 서버 오류");
-    error.retryable=response.status===429||response.status>=500;
-    throw error;
-   }
-   if(!data.reply)throw new Error("AI 답변을 받지 못했어요.");
-   return data.reply;
-  }catch(error){
-   lastError=error;
-   const retryable=error.name==="AbortError"||error instanceof TypeError||error.retryable===true;
-   if(!retryable||attempt===2)throw error;
-   await wait((attempt+1)*1500);
+   data=JSON.parse(responseText);
+  }catch(e){
+   throw new Error("서버 응답을 읽을 수 없습니다.");
   }
+
+  if(!response.ok){
+   throw new Error(data.error||"AI 서버 오류");
+  }
+
+  if(!data.reply){
+   throw new Error("AI 답변을 받지 못했어요.");
+  }
+
+  return data.reply;
+
+ }finally{
+  clearTimeout(timeout);
  }
- throw lastError;
 }
+
+/* 메시지 전송 */
 async function sendMessage(){
  const text=$("messageInput").value.trim();
  if(!text||$("sendButton").disabled)return;
+
  addMessage(text,"user");
  $("messageInput").value="";
  $("sendButton").disabled=true;
+
  const loading=addMessage("답변을 작성하고 있습니다...","bot",false);
+ loading.classList.add("loading");
+
  try{
   const reply=await requestAI(text);
   loading.remove();
   addMessage(reply,"bot");
+
  }catch(error){
   loading.remove();
+
   let message=error.message;
-  if(error.name==="AbortError")message="응답 시간이 초과됐어요. 다시 시도해 주세요.";
-  else if(error instanceof TypeError)message="서버에 연결할 수 없어요.";
+
+  if(error.name==="AbortError"){
+   message="응답 시간이 초과됐어요. 다시 시도해 주세요.";
+  }
+
   addMessage("오류: "+message,"bot");
+
  }finally{
   $("sendButton").disabled=false;
   $("messageInput").focus();
  }
 }
+
 $("sendButton").onclick=sendMessage;
 $("messageInput").onkeydown=e=>{
  if(e.key==="Enter")sendMessage();
