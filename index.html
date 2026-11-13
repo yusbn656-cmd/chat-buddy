@@ -4,115 +4,58 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Chat Buddy</title>
+<meta name="google-site-verification" content="REEVgaK7XkXKxosq1PzyGAIAUjG6U8Ap4uR3q8XDXbQ">
+<meta name="description" content="Chat Buddy - 무엇이든 편하게 질문하고 AI와 대화해 보세요.">
+<meta name="robots" content="index,follow">
+<title>Chat Buddy - AI 친구</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#111;color:#fff;font-family:Arial,sans-serif}
 button{cursor:pointer;border:0}
 .hidden{display:none!important}
 button:disabled{opacity:.5;cursor:wait}
-
-/* 첫 화면 */
-#landing{
- min-height:100dvh;display:flex;flex-direction:column;
- align-items:center;justify-content:center;padding:24px
-}
+#landing{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
 .logo{font-size:36px;font-weight:800;letter-spacing:-2px}
 .sub{color:#999;margin:12px 0 35px}
-#questionBox{
- width:100%;max-width:650px;background:#222;
- border:1px solid #444;border-radius:20px;padding:12px
-}
-#firstQuestion{
- width:100%;height:110px;resize:none;background:transparent;
- border:0;outline:0;color:white;font-size:16px;padding:10px
-}
+#questionBox{width:100%;max-width:650px;background:#222;border:1px solid #444;border-radius:20px;padding:12px}
+#firstQuestion{width:100%;height:110px;resize:none;background:transparent;border:0;outline:0;color:white;font-size:16px;padding:10px}
 .question-bottom{display:flex;justify-content:flex-end}
-#firstSend{
- background:#fff;color:#111;border-radius:12px;
- padding:12px 20px;font-weight:bold
-}
+#firstSend{background:#fff;color:#111;border-radius:12px;padding:12px 20px;font-weight:bold}
 .small{color:#777;font-size:12px;margin-top:18px}
-
-/* 로그인 */
-#loginScreen{
- position:fixed;inset:0;background:#000b;z-index:50;
- display:flex;align-items:center;justify-content:center;padding:20px
-}
-.login-box{
- width:100%;max-width:380px;background:#202020;
- border:1px solid #444;border-radius:20px;padding:25px;text-align:center
-}
+#loginScreen{position:fixed;inset:0;background:#000b;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{width:100%;max-width:380px;background:#202020;border:1px solid #444;border-radius:20px;padding:25px;text-align:center}
 .login-box p{color:#aaa;font-size:14px}
-.login-btn{
- width:100%;padding:14px;margin-top:12px;border-radius:10px;
- background:#eee;color:#111;font-weight:bold
-}
+.login-btn{width:100%;padding:14px;margin-top:12px;border-radius:10px;background:#eee;color:#111;font-weight:bold}
 .guest-btn{background:#383838;color:white}
 #loginError{color:#ff8585}
-
-/* 채팅 */
 #app{height:100dvh;display:flex}
-#sidebar{
- width:250px;background:#191919;border-right:1px solid #333;
- padding:15px;display:flex;flex-direction:column;flex-shrink:0
-}
-.side-btn{
- background:transparent;color:#ddd;width:100%;
- text-align:left;padding:12px;border-radius:9px
-}
+#sidebar{width:250px;background:#191919;border-right:1px solid #333;padding:15px;display:flex;flex-direction:column;flex-shrink:0}
+.side-btn{background:transparent;color:#ddd;width:100%;text-align:left;padding:12px;border-radius:9px}
 .side-btn:hover,.history-item:hover{background:#303030}
 #historyList{flex:1;overflow:auto;margin-top:10px}
-.history-item{
- display:block;width:100%;padding:11px;text-align:left;
- color:#bbb;background:transparent;white-space:nowrap;
- overflow:hidden;text-overflow:ellipsis
-}
+.history-item{display:block;width:100%;padding:11px;text-align:left;color:#bbb;background:transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #main{flex:1;min-width:0;display:flex;flex-direction:column}
-header{
- height:62px;background:#1c1c1c;border-bottom:1px solid #333;
- display:flex;align-items:center;padding:10px 15px;gap:12px
-}
+header{height:62px;background:#1c1c1c;border-bottom:1px solid #333;display:flex;align-items:center;padding:10px 15px;gap:12px}
 header h2{font-size:18px;flex:1}
 .header-btn{background:#333;color:white;padding:10px;border-radius:9px}
-#chat{
- flex:1;overflow:auto;padding:20px 14px;
- display:flex;flex-direction:column;gap:14px
-}
-.message{
- max-width:85%;padding:13px 16px;border-radius:18px;
- line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere
-}
+#chat{flex:1;overflow:auto;padding:20px 14px;display:flex;flex-direction:column;gap:14px}
+.message{max-width:85%;padding:13px 16px;border-radius:18px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
 .user{align-self:flex-end;background:#eee;color:#111}
 .bot{align-self:flex-start;background:#292929;color:white}
 .loading{opacity:.4;animation:pulse 1.2s infinite alternate}
 @keyframes pulse{from{opacity:.25}to{opacity:.55}}
-footer{
- background:#1c1c1c;border-top:1px solid #333;padding:12px
-}
-.input-area{
- display:flex;gap:8px;padding:7px;background:#292929;
- border:1px solid #444;border-radius:18px
-}
-#messageInput{
- flex:1;min-width:0;background:transparent;color:white;
- border:0;outline:0;padding:10px;font-size:15px
-}
-#sendButton{
- width:45px;height:45px;border-radius:12px;background:white;color:#111
-}
+footer{background:#1c1c1c;border-top:1px solid #333;padding:12px}
+.input-area{display:flex;gap:8px;padding:7px;background:#292929;border:1px solid #444;border-radius:18px}
+#messageInput{flex:1;min-width:0;background:transparent;color:white;border:0;outline:0;padding:10px;font-size:15px}
+#sendButton{width:45px;height:45px;border-radius:12px;background:white;color:#111}
 @media(max-width:650px){
- #sidebar{
-  position:fixed;z-index:10;top:0;bottom:0;left:0;
-  transform:translateX(-100%);transition:.2s
- }
- #sidebar.open{transform:translateX(0)}
+#sidebar{position:fixed;z-index:10;top:0;bottom:0;left:0;transform:translateX(-100%);transition:.2s}
+#sidebar.open{transform:translateX(0)}
 }
 </style>
 </head>
 <body>
 
-<!-- 로그인 전 첫 화면 -->
 <section id="landing">
  <div class="logo">Chat Buddy</div>
  <p class="sub">무엇이든 편하게 물어보세요.</p>
@@ -125,7 +68,6 @@ footer{
  <p class="small">질문을 보내고 로그인하면 AI 답변을 확인할 수 있어요.</p>
 </section>
 
-<!-- 로그인 창 -->
 <div id="loginScreen" class="hidden">
  <div class="login-box">
   <h2>Chat Buddy</h2>
@@ -136,7 +78,6 @@ footer{
  </div>
 </div>
 
-<!-- 로그인 후 채팅 화면 -->
 <div id="app" class="hidden">
  <aside id="sidebar">
   <h3>Chat Buddy</h3>
@@ -151,7 +92,6 @@ footer{
    <button class="side-btn" id="logoutButton">로그아웃</button>
   </div>
  </aside>
-
  <main id="main">
   <header>
    <button class="header-btn" id="menuButton">메뉴</button>
@@ -184,8 +124,8 @@ const firebaseConfig={
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
 const provider=new firebase.auth.GoogleAuthProvider();
-
 const $=id=>document.getElementById(id);
+
 let currentUser=null;
 let conversations=[];
 let currentId=null;
@@ -214,22 +154,18 @@ $("firstQuestion").onkeydown=e=>{
 function storageKey(){
  return "chatBuddyConversations_"+currentUser.uid;
 }
-
 function saveAll(){
  localStorage.setItem(storageKey(),JSON.stringify(conversations));
 }
-
 function loadAll(){
  try{
   conversations=JSON.parse(localStorage.getItem(storageKey())||"[]");
   if(!Array.isArray(conversations))conversations=[];
  }catch(e){conversations=[]}
 }
-
 function currentConversation(){
  return conversations.find(c=>c.id===currentId);
 }
-
 function saveConversation(){
  const c=currentConversation();
  if(!c)return;
@@ -237,42 +173,32 @@ function saveConversation(){
  saveAll();
  renderHistory();
 }
-
 function addMessage(text,type,save=true){
  const div=document.createElement("div");
  div.className="message "+type;
  div.textContent=text;
  $("chat").appendChild(div);
  $("chat").scrollTop=$("chat").scrollHeight;
-
  if(save){
   const c=currentConversation();
   if(c){
    c.messages.push({text,type});
-   if(c.title==="새 대화"&&type==="user"){
-    c.title=text.slice(0,25);
-   }
+   if(c.title==="새 대화"&&type==="user")c.title=text.slice(0,25);
    saveConversation();
   }
  }
  return div;
 }
-
 function showConversation(){
  $("chat").innerHTML="";
  const c=currentConversation();
- if(c){
-  c.messages.forEach(m=>addMessage(m.text,m.type,false));
- }
+ if(c)c.messages.forEach(m=>addMessage(m.text,m.type,false));
 }
-
 function renderHistory(){
  const list=$("historyList");
  const keyword=$("searchInput").value.toLowerCase();
  list.innerHTML="";
-
- [...conversations]
- .sort((a,b)=>b.updated-a.updated)
+ [...conversations].sort((a,b)=>b.updated-a.updated)
  .filter(c=>c.title.toLowerCase().includes(keyword))
  .forEach(c=>{
   const btn=document.createElement("button");
@@ -286,14 +212,8 @@ function renderHistory(){
   list.appendChild(btn);
  });
 }
-
 function createNewChat(){
- const c={
-  id:Date.now().toString(),
-  title:"새 대화",
-  messages:[],
-  updated:Date.now()
- };
+ const c={id:Date.now().toString(),title:"새 대화",messages:[],updated:Date.now()};
  conversations.push(c);
  currentId=c.id;
  saveAll();
@@ -302,30 +222,20 @@ function createNewChat(){
  $("messageInput").focus();
  $("sidebar").classList.remove("open");
 }
-
 function enterApp(user){
  currentUser=user;
  $("landing").classList.add("hidden");
  $("loginScreen").classList.add("hidden");
  $("app").classList.remove("hidden");
-
- $("profileName").textContent=user.isAnonymous
-  ?"비회원 사용자"
-  :(user.displayName||user.email||"Google 사용자");
-
+ $("profileName").textContent=user.isAnonymous?"비회원 사용자":(user.displayName||user.email||"Google 사용자");
  loadAll();
-
  if(conversations.length){
   conversations.sort((a,b)=>b.updated-a.updated);
   currentId=conversations[0].id;
   showConversation();
- }else{
-  createNewChat();
- }
-
+ }else createNewChat();
  renderHistory();
 
- // 로그인 전에 입력한 질문 자동 전송
  if(!pendingSent){
   const pending=localStorage.getItem("chatBuddyPendingQuestion");
   if(pending){
@@ -356,7 +266,6 @@ $("googleLogin").onclick=async()=>{
   $("loginError").textContent="로그인 오류: "+e.message;
  }
 };
-
 $("guestLogin").onclick=async()=>{
  $("loginError").textContent="로그인 중...";
  try{
@@ -366,14 +275,12 @@ $("guestLogin").onclick=async()=>{
   $("loginError").textContent="로그인 오류: "+e.message;
  }
 };
-
 $("logoutButton").onclick=async()=>{
  if(confirm("로그아웃할까요?")){
   pendingSent=false;
   await auth.signOut();
  }
 };
-
 $("menuButton").onclick=()=>$("sidebar").classList.toggle("open");
 $("newChat").onclick=createNewChat;
 $("sideNewChat").onclick=createNewChat;
@@ -384,7 +291,6 @@ $("libraryButton").onclick=()=>alert("보관함은 다음 업데이트에서 추
 async function requestAI(message){
  const controller=new AbortController();
  const timeout=setTimeout(()=>controller.abort(),60000);
-
  try{
   const response=await fetch("/api/chat",{
    method:"POST",
@@ -392,24 +298,12 @@ async function requestAI(message){
    body:JSON.stringify({message}),
    signal:controller.signal
   });
-
   const responseText=await response.text();
   let data;
-
-  try{
-   data=JSON.parse(responseText);
-  }catch(e){
-   throw new Error("서버 응답을 읽을 수 없습니다.");
-  }
-
-  if(!response.ok){
-   throw new Error(data.error||"AI 서버 오류");
-  }
-
-  if(!data.reply){
-   throw new Error("AI 답변을 받지 못했어요.");
-  }
-
+  try{data=JSON.parse(responseText)}
+  catch(e){throw new Error("서버 응답을 읽을 수 없습니다.")}
+  if(!response.ok)throw new Error(data.error||"AI 서버 오류");
+  if(!data.reply)throw new Error("AI 답변을 받지 못했어요.");
   return data.reply;
  }finally{
   clearTimeout(timeout);
@@ -419,14 +313,11 @@ async function requestAI(message){
 async function sendMessage(){
  const text=$("messageInput").value.trim();
  if(!text||$("sendButton").disabled)return;
-
  addMessage(text,"user");
  $("messageInput").value="";
  $("sendButton").disabled=true;
-
  const loading=addMessage("답변을 작성하고 있습니다...","bot",false);
  loading.classList.add("loading");
-
  try{
   const reply=await requestAI(text);
   loading.remove();
@@ -434,16 +325,13 @@ async function sendMessage(){
  }catch(error){
   loading.remove();
   let msg=error.message;
-  if(error.name==="AbortError"){
-   msg="응답 시간이 초과됐어요. 다시 시도해 주세요.";
-  }
+  if(error.name==="AbortError")msg="응답 시간이 초과됐어요. 다시 시도해 주세요.";
   addMessage("오류: "+msg,"bot");
  }finally{
   $("sendButton").disabled=false;
   $("messageInput").focus();
  }
 }
-
 $("sendButton").onclick=sendMessage;
 $("messageInput").onkeydown=e=>{
  if(e.key==="Enter")sendMessage();
