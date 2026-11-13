@@ -3,97 +3,108 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Chat Buddy</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#111;color:white;font-family:Arial,sans-serif}
+body{margin:0;background:#111;color:#fff;font-family:Arial,sans-serif}
 button{cursor:pointer;border:0}
 .hidden{display:none!important}
+button:disabled{opacity:.5;cursor:wait}
 
+/* 첫 화면 */
+#landing{
+ min-height:100dvh;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;padding:24px
+}
+.logo{font-size:36px;font-weight:800;letter-spacing:-2px}
+.sub{color:#999;margin:12px 0 35px}
+#questionBox{
+ width:100%;max-width:650px;background:#222;
+ border:1px solid #444;border-radius:20px;padding:12px
+}
+#firstQuestion{
+ width:100%;height:110px;resize:none;background:transparent;
+ border:0;outline:0;color:white;font-size:16px;padding:10px
+}
+.question-bottom{display:flex;justify-content:flex-end}
+#firstSend{
+ background:#fff;color:#111;border-radius:12px;
+ padding:12px 20px;font-weight:bold
+}
+.small{color:#777;font-size:12px;margin-top:18px}
+
+/* 로그인 */
 #loginScreen{
- position:fixed;inset:0;background:#111;
+ position:fixed;inset:0;background:#000b;z-index:50;
  display:flex;align-items:center;justify-content:center;padding:20px
 }
 .login-box{
- width:100%;max-width:380px;background:#1c1c1c;
- border:1px solid #333;border-radius:18px;padding:28px;text-align:center
+ width:100%;max-width:380px;background:#202020;
+ border:1px solid #444;border-radius:20px;padding:25px;text-align:center
 }
+.login-box p{color:#aaa;font-size:14px}
 .login-btn{
  width:100%;padding:14px;margin-top:12px;border-radius:10px;
  background:#eee;color:#111;font-weight:bold
 }
-.guest-btn{background:#333;color:white}
+.guest-btn{background:#383838;color:white}
+#loginError{color:#ff8585}
 
-#app{display:flex;height:100dvh;overflow:hidden}
+/* 채팅 */
+#app{height:100dvh;display:flex}
 #sidebar{
- width:250px;flex-shrink:0;background:#191919;
- border-right:1px solid #333;padding:15px;
- display:flex;flex-direction:column
+ width:250px;background:#191919;border-right:1px solid #333;
+ padding:15px;display:flex;flex-direction:column;flex-shrink:0
 }
 .side-btn{
- width:100%;padding:12px;text-align:left;
- background:transparent;color:#ddd;border-radius:9px;margin-bottom:5px
+ background:transparent;color:#ddd;width:100%;
+ text-align:left;padding:12px;border-radius:9px
 }
 .side-btn:hover,.history-item:hover{background:#303030}
-#historyList{overflow-y:auto;flex:1;margin-top:12px}
+#historyList{flex:1;overflow:auto;margin-top:10px}
 .history-item{
- width:100%;padding:11px;text-align:left;background:transparent;
- color:#bbb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+ display:block;width:100%;padding:11px;text-align:left;
+ color:#bbb;background:transparent;white-space:nowrap;
+ overflow:hidden;text-overflow:ellipsis
 }
-
 #main{flex:1;min-width:0;display:flex;flex-direction:column}
 header{
- height:65px;padding:12px 16px;background:#1c1c1c;
- border-bottom:1px solid #333;display:flex;align-items:center;gap:12px
+ height:62px;background:#1c1c1c;border-bottom:1px solid #333;
+ display:flex;align-items:center;padding:10px 15px;gap:12px
 }
-header h2{font-size:19px;margin:0;flex:1}
-#menuButton,#newChat{
- padding:10px 13px;border-radius:9px;background:#333;color:white
-}
-
+header h2{font-size:18px;flex:1}
+.header-btn{background:#333;color:white;padding:10px;border-radius:9px}
 #chat{
- flex:1;overflow-y:auto;padding:18px 14px;
+ flex:1;overflow:auto;padding:20px 14px;
  display:flex;flex-direction:column;gap:14px
 }
 .message{
- max-width:85%;padding:12px 15px;border-radius:19px;
- font-size:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere
+ max-width:85%;padding:13px 16px;border-radius:18px;
+ line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere
 }
 .user{align-self:flex-end;background:#eee;color:#111}
 .bot{align-self:flex-start;background:#292929;color:white}
-
-/* 답변 작성 중 표시 */
-.message.loading{
- opacity:.38;
- animation:pulse 1.2s ease-in-out infinite alternate;
-}
-@keyframes pulse{
- from{opacity:.25}
- to{opacity:.55}
-}
-
+.loading{opacity:.4;animation:pulse 1.2s infinite alternate}
+@keyframes pulse{from{opacity:.25}to{opacity:.55}}
 footer{
- padding:10px 14px 16px;background:#1c1c1c;border-top:1px solid #333
+ background:#1c1c1c;border-top:1px solid #333;padding:12px
 }
 .input-area{
  display:flex;gap:8px;padding:7px;background:#292929;
- border:1px solid #444;border-radius:20px
+ border:1px solid #444;border-radius:18px
 }
 #messageInput{
- flex:1;min-width:0;padding:10px;background:transparent;
- border:0;outline:0;color:white;font-size:15px
+ flex:1;min-width:0;background:transparent;color:white;
+ border:0;outline:0;padding:10px;font-size:15px
 }
 #sendButton{
- width:45px;height:45px;border-radius:13px;
- background:white;color:black;font-size:24px
+ width:45px;height:45px;border-radius:12px;background:white;color:#111
 }
-#sendButton:disabled{opacity:.5;cursor:wait}
-
 @media(max-width:650px){
  #sidebar{
-  position:fixed;z-index:20;top:0;bottom:0;left:0;
-  transform:translateX(-100%);transition:transform .2s
+  position:fixed;z-index:10;top:0;bottom:0;left:0;
+  transform:translateX(-100%);transition:.2s
  }
  #sidebar.open{transform:translateX(0)}
 }
@@ -101,16 +112,31 @@ footer{
 </head>
 <body>
 
-<div id="loginScreen">
+<!-- 로그인 전 첫 화면 -->
+<section id="landing">
+ <div class="logo">Chat Buddy</div>
+ <p class="sub">무엇이든 편하게 물어보세요.</p>
+ <div id="questionBox">
+  <textarea id="firstQuestion" placeholder="궁금한 것을 입력하세요..."></textarea>
+  <div class="question-bottom">
+   <button id="firstSend">질문 보내기 ↑</button>
+  </div>
+ </div>
+ <p class="small">질문을 보내고 로그인하면 AI 답변을 확인할 수 있어요.</p>
+</section>
+
+<!-- 로그인 창 -->
+<div id="loginScreen" class="hidden">
  <div class="login-box">
-  <h1>Chat Buddy</h1>
-  <p>로그인하고 AI 대화를 시작하세요.</p>
+  <h2>Chat Buddy</h2>
+  <p>답변을 확인하려면 로그인해 주세요.</p>
   <button class="login-btn" id="googleLogin">Google로 로그인</button>
   <button class="login-btn guest-btn" id="guestLogin">비회원으로 계속하기</button>
   <p id="loginError"></p>
  </div>
 </div>
 
+<!-- 로그인 후 채팅 화면 -->
 <div id="app" class="hidden">
  <aside id="sidebar">
   <h3>Chat Buddy</h3>
@@ -121,7 +147,6 @@ footer{
   <p>최근 대화</p>
   <div id="historyList"></div>
   <div>
-   <button class="side-btn" id="settingsButton">설정</button>
    <p id="profileName"></p>
    <button class="side-btn" id="logoutButton">로그아웃</button>
   </div>
@@ -129,9 +154,9 @@ footer{
 
  <main id="main">
   <header>
-   <button id="menuButton">메뉴</button>
+   <button class="header-btn" id="menuButton">메뉴</button>
    <h2>Chat Buddy</h2>
-   <button id="newChat">새 대화</button>
+   <button class="header-btn" id="newChat">새 대화</button>
   </header>
   <section id="chat"></section>
   <footer>
@@ -139,7 +164,6 @@ footer{
     <input id="messageInput" placeholder="메시지를 입력하세요..." autocomplete="off">
     <button id="sendButton">↑</button>
    </div>
-   <p style="text-align:center;color:#777;font-size:12px">Chat Buddy AI</p>
   </footer>
  </main>
 </div>
@@ -165,22 +189,47 @@ const $=id=>document.getElementById(id);
 let currentUser=null;
 let conversations=[];
 let currentId=null;
+let pendingSent=false;
+
+function showLogin(){
+ $("loginScreen").classList.remove("hidden");
+ $("loginError").textContent="";
+}
+
+function savePendingQuestion(){
+ const question=$("firstQuestion").value.trim();
+ if(!question)return;
+ localStorage.setItem("chatBuddyPendingQuestion",question);
+ showLogin();
+}
+
+$("firstSend").onclick=savePendingQuestion;
+$("firstQuestion").onkeydown=e=>{
+ if(e.key==="Enter"&&!e.shiftKey){
+  e.preventDefault();
+  savePendingQuestion();
+ }
+};
 
 function storageKey(){
  return "chatBuddyConversations_"+currentUser.uid;
 }
+
 function saveAll(){
  localStorage.setItem(storageKey(),JSON.stringify(conversations));
 }
+
 function loadAll(){
  try{
   conversations=JSON.parse(localStorage.getItem(storageKey())||"[]");
   if(!Array.isArray(conversations))conversations=[];
  }catch(e){conversations=[]}
 }
+
 function currentConversation(){
  return conversations.find(c=>c.id===currentId);
 }
+
 function saveConversation(){
  const c=currentConversation();
  if(!c)return;
@@ -188,32 +237,42 @@ function saveConversation(){
  saveAll();
  renderHistory();
 }
+
 function addMessage(text,type,save=true){
  const div=document.createElement("div");
  div.className="message "+type;
  div.textContent=text;
  $("chat").appendChild(div);
  $("chat").scrollTop=$("chat").scrollHeight;
+
  if(save){
   const c=currentConversation();
   if(c){
    c.messages.push({text,type});
-   if(c.title==="새 대화"&&type==="user")c.title=text.slice(0,25);
+   if(c.title==="새 대화"&&type==="user"){
+    c.title=text.slice(0,25);
+   }
    saveConversation();
   }
  }
  return div;
 }
+
 function showConversation(){
  $("chat").innerHTML="";
  const c=currentConversation();
- if(c)c.messages.forEach(m=>addMessage(m.text,m.type,false));
+ if(c){
+  c.messages.forEach(m=>addMessage(m.text,m.type,false));
+ }
 }
+
 function renderHistory(){
  const list=$("historyList");
  const keyword=$("searchInput").value.toLowerCase();
  list.innerHTML="";
- [...conversations].sort((a,b)=>b.updated-a.updated)
+
+ [...conversations]
+ .sort((a,b)=>b.updated-a.updated)
  .filter(c=>c.title.toLowerCase().includes(keyword))
  .forEach(c=>{
   const btn=document.createElement("button");
@@ -227,6 +286,7 @@ function renderHistory(){
   list.appendChild(btn);
  });
 }
+
 function createNewChat(){
  const c={
   id:Date.now().toString(),
@@ -242,14 +302,19 @@ function createNewChat(){
  $("messageInput").focus();
  $("sidebar").classList.remove("open");
 }
+
 function enterApp(user){
  currentUser=user;
+ $("landing").classList.add("hidden");
  $("loginScreen").classList.add("hidden");
  $("app").classList.remove("hidden");
+
  $("profileName").textContent=user.isAnonymous
   ?"비회원 사용자"
   :(user.displayName||user.email||"Google 사용자");
+
  loadAll();
+
  if(conversations.length){
   conversations.sort((a,b)=>b.updated-a.updated);
   currentId=conversations[0].id;
@@ -257,7 +322,19 @@ function enterApp(user){
  }else{
   createNewChat();
  }
+
  renderHistory();
+
+ // 로그인 전에 입력한 질문 자동 전송
+ if(!pendingSent){
+  const pending=localStorage.getItem("chatBuddyPendingQuestion");
+  if(pending){
+   pendingSent=true;
+   localStorage.removeItem("chatBuddyPendingQuestion");
+   $("messageInput").value=pending;
+   setTimeout(()=>sendMessage(),300);
+  }
+ }
 }
 
 auth.onAuthStateChanged(user=>{
@@ -266,7 +343,7 @@ auth.onAuthStateChanged(user=>{
  }else{
   currentUser=null;
   $("app").classList.add("hidden");
-  $("loginScreen").classList.remove("hidden");
+  $("landing").classList.remove("hidden");
  }
 });
 
@@ -286,12 +363,15 @@ $("guestLogin").onclick=async()=>{
   await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
   await auth.signInAnonymously();
  }catch(e){
-  $("loginError").textContent=e.message;
+  $("loginError").textContent="로그인 오류: "+e.message;
  }
 };
 
 $("logoutButton").onclick=async()=>{
- if(confirm("로그아웃할까요?"))await auth.signOut();
+ if(confirm("로그아웃할까요?")){
+  pendingSent=false;
+  await auth.signOut();
+ }
 };
 
 $("menuButton").onclick=()=>$("sidebar").classList.toggle("open");
@@ -300,11 +380,7 @@ $("sideNewChat").onclick=createNewChat;
 $("searchToggle").onclick=()=>$("searchInput").classList.toggle("hidden");
 $("searchInput").oninput=renderHistory;
 $("libraryButton").onclick=()=>alert("보관함은 다음 업데이트에서 추가됩니다.");
-$("settingsButton").onclick=()=>alert(
- "현재 로그인 방식: "+(currentUser.isAnonymous?"비회원":"Google")
-);
 
-/* AI 서버 요청 */
 async function requestAI(message){
  const controller=new AbortController();
  const timeout=setTimeout(()=>controller.abort(),60000);
@@ -335,13 +411,11 @@ async function requestAI(message){
   }
 
   return data.reply;
-
  }finally{
   clearTimeout(timeout);
  }
 }
 
-/* 메시지 전송 */
 async function sendMessage(){
  const text=$("messageInput").value.trim();
  if(!text||$("sendButton").disabled)return;
@@ -357,18 +431,13 @@ async function sendMessage(){
   const reply=await requestAI(text);
   loading.remove();
   addMessage(reply,"bot");
-
  }catch(error){
   loading.remove();
-
-  let message=error.message;
-
+  let msg=error.message;
   if(error.name==="AbortError"){
-   message="응답 시간이 초과됐어요. 다시 시도해 주세요.";
+   msg="응답 시간이 초과됐어요. 다시 시도해 주세요.";
   }
-
-  addMessage("오류: "+message,"bot");
-
+  addMessage("오류: "+msg,"bot");
  }finally{
   $("sendButton").disabled=false;
   $("messageInput").focus();
