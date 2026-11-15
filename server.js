@@ -1,17 +1,19 @@
-
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json({ limit: "10mb" }));
-app.use(express.static(path.join(__dirname, "public")));
 
+// 이미지 업로드 설정
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: {
+    fileSize: 5 * 1024 * 1024
+  },
   fileFilter: (req, file, cb) => {
     if (file.mimetype && file.mimetype.startsWith("image/")) {
       cb(null, true);
@@ -21,10 +23,31 @@ const upload = multer({
   }
 });
 
+// 웹사이트 파일 제공
+const publicFolder = path.join(__dirname, "public");
+const rootIndex = path.join(__dirname, "index.html");
+const publicIndex = path.join(publicFolder, "index.html");
+
+app.use(express.static(publicFolder));
+
+app.get("/", (req, res) => {
+  if (fs.existsSync(publicIndex)) {
+    return res.sendFile(publicIndex);
+  }
+
+  if (fs.existsSync(rootIndex)) {
+    return res.sendFile(rootIndex);
+  }
+
+  res.status(404).send("index.html 파일을 찾을 수 없습니다.");
+});
+
+// 서버 상태 확인
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+// AI 채팅
 app.post("/api/chat", upload.single("image"), async (req, res) => {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -50,14 +73,16 @@ app.post("/api/chat", upload.single("image"), async (req, res) => {
           "너는 Chat Buddy라는 친절하고 유머러스한 AI 도우미야. " +
           "한국어로 자연스럽게 답하고, 진지한 질문에는 진지하게 답해. " +
           "초등학생도 이해하기 쉽게 설명해 줘.\n\n" +
-          "사용자 질문: " + (message || "첨부된 사진을 자세히 분석해 줘.")
+          "사용자 질문: " +
+          (message || "첨부된 사진을 자세히 분석해 줘.")
       }
     ];
 
+    // 사진이 첨부된 경우
     if (req.file) {
       parts.push({
-        inline_data: {
-          mime_type: req.file.mimetype,
+        inlineData: {
+          mimeType: req.file.mimetype,
           data: req.file.buffer.toString("base64")
         }
       });
@@ -71,7 +96,11 @@ app.post("/api/chat", upload.single("image"), async (req, res) => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          contents: [{ parts }],
+          contents: [
+            {
+              parts: parts
+            }
+          ],
           generationConfig: {
             temperature: 0.8,
             maxOutputTokens: 2048
@@ -84,8 +113,11 @@ app.post("/api/chat", upload.single("image"), async (req, res) => {
 
     if (!response.ok) {
       console.error("Gemini API 오류:", data);
+
       return res.status(502).json({
-        error: data.error?.message || "AI 연결에 실패했습니다."
+        error:
+          data.error?.message ||
+          "AI 연결에 실패했습니다."
       });
     }
 
@@ -104,19 +136,23 @@ app.post("/api/chat", upload.single("image"), async (req, res) => {
 
   } catch (error) {
     console.error("Chat Buddy 서버 오류:", error);
+
     res.status(500).json({
       error: "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
     });
   }
 });
 
+// 오류 처리
 app.use((error, req, res, next) => {
   console.error(error);
+
   res.status(400).json({
     error: error.message || "요청을 처리할 수 없습니다."
   });
 });
 
+// 서버 실행
 app.listen(PORT, () => {
   console.log(`Chat Buddy server running on port ${PORT}`);
 });
