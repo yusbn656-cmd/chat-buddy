@@ -12,13 +12,14 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#fff;color:#111;font-family:Arial,"Noto Sans KR",sans-serif}
-button{cursor:pointer;border:0}
+button{cursor:pointer;border:0;font-family:inherit}
 #login{position:fixed;inset:0;background:white;z-index:20;display:flex;align-items:center;justify-content:center;padding:20px}
 .login-box{width:100%;max-width:380px;text-align:center}
 .login-box h1{font-size:34px;margin-bottom:10px}
 .login-box p{color:#777;margin-bottom:30px}
 .login-btn{width:100%;padding:15px;border:1px solid #ddd;border-radius:12px;background:white;color:#111;font-size:16px;margin:7px 0}
 .login-btn.dark{background:#111;color:white;border-color:#111}
+#loginStatus{font-size:13px;line-height:1.5}
 #app{display:none;height:100dvh}
 #sidebar{position:fixed;left:0;top:0;bottom:0;width:270px;background:#f7f7f7;padding:16px;z-index:10;display:flex;flex-direction:column;transform:translateX(-100%);transition:.2s}
 #sidebar.open{transform:translateX(0)}
@@ -111,13 +112,15 @@ header{height:60px;border-bottom:1px solid #eee;display:flex;align-items:center;
 </div>
 
 <script>
+// Firebase 실제 프로젝트 설정
 const firebaseConfig = {
- apiKey: "AIzaSyD5Yq7x8mN2vL4pQ9wR6cT1aB3eF5gH0",
+ apiKey: "AIzaSyDY3NjN9XhBmYuaioue1Zw1Xt_hzOzQ4M4",
  authDomain: "chatbuddy-a1e78.firebaseapp.com",
  projectId: "chatbuddy-a1e78",
  storageBucket: "chatbuddy-a1e78.firebasestorage.app",
  messagingSenderId: "238364880773",
- appId: "1:238364880773:web:0281f439d192b32157deec"
+ appId: "1:238364880773:web:0281f439d192b32157deec",
+ measurementId: "G-N6P62LE9W9"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -153,13 +156,14 @@ function saveChats(){
 }
 
 function googleLogin(){
- document.getElementById("loginStatus").textContent="로그인 중...";
+ document.getElementById("loginStatus").textContent="Google 로그인 중...";
  auth.signInWithPopup(provider).catch(e=>{
   document.getElementById("loginStatus").textContent="로그인 오류: "+e.message;
  });
 }
 
 function guestLogin(){
+ document.getElementById("loginStatus").textContent="게스트 로그인 중...";
  auth.signInAnonymously().catch(e=>{
   document.getElementById("loginStatus").textContent="게스트 로그인 오류: "+e.message;
  });
@@ -173,7 +177,8 @@ auth.onAuthStateChanged(user=>{
   document.getElementById("userEmail").textContent=
    user.isAnonymous?"게스트 계정":(user.email||"Google 계정");
   loadChats();
-  if(!currentChat)newChat();
+  currentChat=null;
+  newChat();
  }else{
   currentUser=null;
   app.style.display="none";
@@ -351,10 +356,10 @@ function showLibrary(){
 }
 
 function logout(){
- speechSynthesis.cancel();
- auth.signOut();
+ if(window.speechSynthesis)speechSynthesis.cancel();
  currentChat=null;
  chats=[];
+ auth.signOut();
 }
 
 input.addEventListener("keydown",e=>{
