@@ -11,45 +11,164 @@
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#fff;color:#111;font-family:Arial,"Noto Sans KR",sans-serif}
+body{
+ margin:0;background:#fff;color:#111;
+ font-family:Arial,"Noto Sans KR",sans-serif
+}
 button{cursor:pointer;border:0;font-family:inherit}
-#login{position:fixed;inset:0;background:white;z-index:20;display:flex;align-items:center;justify-content:center;padding:20px}
+
+#login{
+ position:fixed;inset:0;background:white;z-index:20;
+ display:flex;align-items:center;justify-content:center;padding:20px
+}
 .login-box{width:100%;max-width:380px;text-align:center}
 .login-box h1{font-size:34px;margin-bottom:10px}
 .login-box p{color:#777;margin-bottom:30px}
-.login-btn{width:100%;padding:15px;border:1px solid #ddd;border-radius:12px;background:white;color:#111;font-size:16px;margin:7px 0}
+.login-btn{
+ width:100%;padding:15px;border:1px solid #ddd;
+ border-radius:12px;background:white;color:#111;
+ font-size:16px;margin:7px 0
+}
 .login-btn.dark{background:#111;color:white;border-color:#111}
 #loginStatus{font-size:13px;line-height:1.5}
+
 #app{display:none;height:100dvh}
-#sidebar{position:fixed;left:0;top:0;bottom:0;width:270px;background:#f7f7f7;padding:16px;z-index:10;display:flex;flex-direction:column;transform:translateX(-100%);transition:.2s}
+#sidebar{
+ position:fixed;left:0;top:0;bottom:0;width:270px;
+ background:#f7f7f7;padding:16px;z-index:10;
+ display:flex;flex-direction:column;
+ transform:translateX(-100%);transition:.2s
+}
 #sidebar.open{transform:translateX(0)}
-.side-btn{width:100%;padding:13px;text-align:left;background:transparent;border-radius:10px;color:#222;font-size:15px;margin-bottom:5px}
+.side-btn{
+ width:100%;padding:13px;text-align:left;background:transparent;
+ border-radius:10px;color:#222;font-size:15px;margin-bottom:5px
+}
 .side-btn:hover,.history-item:hover{background:#eaeaea}
 #history{overflow:auto;flex:1;margin-top:12px}
-.history-item{padding:10px;border-radius:8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.history-item{
+ padding:10px;border-radius:8px;cursor:pointer;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px
+}
 #userInfo{border-top:1px solid #ddd;padding-top:12px;font-size:13px;color:#555}
 #shade{display:none;position:fixed;inset:0;background:#0005;z-index:9}
 #shade.show{display:block}
+
 #main{height:100%;display:flex;flex-direction:column}
-header{height:60px;border-bottom:1px solid #eee;display:flex;align-items:center;padding:0 16px;gap:14px;flex-shrink:0}
+header{
+ height:60px;border-bottom:1px solid #eee;
+ display:flex;align-items:center;padding:0 16px;
+ gap:14px;flex-shrink:0
+}
 #menu{font-size:24px;background:white;color:#111}
 #title{font-size:19px;font-weight:700}
-#messages{flex:1;overflow:auto;width:100%;max-width:850px;margin:auto;padding:20px 20px 30px}
+
+#messages{
+ flex:1;overflow:auto;width:100%;max-width:850px;
+ margin:auto;padding:20px 20px 30px
+}
 #welcome{text-align:center;margin-top:17vh}
 #welcome h1{font-size:28px}
 #welcome p{color:#888}
-.message{margin:25px 0;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
-.user{background:#f2f2f2;border-radius:20px;padding:12px 16px;margin-left:auto;max-width:85%;width:fit-content}
-.ai{padding:4px 2px}
+
+.message{
+ margin:25px 0;line-height:1.75;
+ white-space:pre-wrap;overflow-wrap:anywhere
+}
+.user{
+ background:#f2f2f2;border-radius:20px;padding:12px 16px;
+ margin-left:auto;max-width:85%;width:fit-content
+}
+.ai{padding:4px 2px;color:#111}
+.ai-content{color:#111}
 .note{font-size:12px;color:#999;margin-top:10px}
-.photo{max-width:220px;max-height:220px;object-fit:contain;border-radius:12px;display:block;margin-bottom:8px}
+
+.photo{
+ max-width:220px;max-height:220px;object-fit:contain;
+ border-radius:12px;display:block;margin-bottom:8px
+}
+
+/* AI 답변 작성 중 표시 */
+.typing-indicator{
+ display:inline-block;
+ color:#999;
+ font-size:15px;
+ background:linear-gradient(
+  90deg,#aaa 0%,#dedede 45%,#999 70%
+ );
+ background-size:200% auto;
+ background-clip:text;
+ -webkit-background-clip:text;
+ -webkit-text-fill-color:transparent;
+ animation:typingShimmer 1.5s linear infinite;
+}
+
+.typing-dots{
+ display:inline-flex;
+ gap:4px;
+ margin-left:5px;
+ vertical-align:middle
+}
+.typing-dots span{
+ width:5px;height:5px;border-radius:50%;
+ background:#aaa;
+ animation:dotPulse 1s infinite ease-in-out
+}
+.typing-dots span:nth-child(2){animation-delay:.15s}
+.typing-dots span:nth-child(3){animation-delay:.3s}
+
+@keyframes typingShimmer{
+ 0%{background-position:100% center}
+ 100%{background-position:-100% center}
+}
+@keyframes dotPulse{
+ 0%,80%,100%{opacity:.3;transform:scale(.8)}
+ 40%{opacity:1;transform:scale(1)}
+}
+
+/* 입력창 */
 #bottom{border-top:1px solid #eee;padding:12px;background:white}
-#inputArea{max-width:800px;margin:auto;display:flex;align-items:center;gap:8px;border:1px solid #ddd;border-radius:28px;padding:8px 12px}
-#question{flex:1;min-width:0;border:0;outline:0;resize:none;font-size:16px;max-height:120px;color:#111;font-family:inherit}
-.tool{width:42px;height:42px;border-radius:50%;background:#f1f1f1;color:#222;font-size:20px;flex-shrink:0}
-#send{background:#111;color:white;width:44px;height:44px;border-radius:50%;font-size:23px}
-#status{text-align:center;color:#999;font-size:12px;margin-top:8px}
-#searchBox{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;margin:8px 0}
+#inputArea{
+ max-width:800px;margin:auto;display:flex;align-items:center;
+ gap:8px;border:1px solid #ddd;border-radius:28px;padding:8px 12px
+}
+#question{
+ flex:1;min-width:0;border:0;outline:0;resize:none;
+ font-size:16px;max-height:120px;color:#111;font-family:inherit
+}
+.tool{
+ width:42px;height:42px;border-radius:50%;
+ background:#f1f1f1;color:#222;
+ display:flex;align-items:center;justify-content:center;
+ flex-shrink:0
+}
+.tool svg{width:21px;height:21px;stroke:currentColor}
+#mic{
+ background:#f2f2f2;color:#222;
+ transition:background .2s,color .2s,transform .2s
+}
+#mic:active{transform:scale(.94)}
+#mic.listening{
+ background:#d93025;color:white;
+ animation:micPulse 1.2s infinite
+}
+@keyframes micPulse{
+ 0%,100%{box-shadow:0 0 0 0 #d9302533}
+ 50%{box-shadow:0 0 0 7px #d9302515}
+}
+#send{
+ background:#111;color:white;width:44px;height:44px;
+ border-radius:50%;font-size:23px
+}
+#status{
+ text-align:center;color:#999;font-size:12px;margin-top:8px;
+ min-height:14px
+}
+#searchBox{
+ width:100%;padding:10px;border:1px solid #ddd;
+ border-radius:10px;margin:8px 0
+}
+
 @media(min-width:800px){
  #sidebar{transform:translateX(0)}
  #main{margin-left:270px}
@@ -76,7 +195,8 @@ header{height:60px;border-bottom:1px solid #eee;display:flex;align-items:center;
  <button class="side-btn" onclick="newChat()">＋ 새 채팅</button>
  <button class="side-btn" onclick="showSearch()">⌕ 채팅 검색</button>
  <button class="side-btn" onclick="showLibrary()">▤ 자료실</button>
- <input id="searchBox" placeholder="대화 검색" style="display:none" oninput="searchChats(this.value)">
+ <input id="searchBox" placeholder="대화 검색"
+  style="display:none" oninput="searchChats(this.value)">
  <div id="history"></div>
  <div id="userInfo">
   <div id="userEmail"></div>
@@ -100,11 +220,31 @@ header{height:60px;border-bottom:1px solid #eee;display:flex;align-items:center;
 
   <div id="bottom">
    <div id="inputArea">
-    <button class="tool" onclick="document.getElementById('imageInput').click()">＋</button>
+
+    <button class="tool" aria-label="사진 첨부"
+     onclick="document.getElementById('imageInput').click()">
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round">
+      <path d="M12 5v14M5 12h14"/>
+     </svg>
+    </button>
+
     <input id="imageInput" type="file" accept="image/*" hidden>
-    <textarea id="question" rows="1" placeholder="Chat Buddy에게 물어보세요"></textarea>
-    <button class="tool" id="mic" onclick="startVoice()">🎙</button>
-    <button id="send" onclick="sendMessage()">↑</button>
+
+    <textarea id="question" rows="1"
+     placeholder="Chat Buddy에게 물어보세요"></textarea>
+
+    <button class="tool" id="mic" aria-label="음성 입력"
+     onclick="startVoice()">
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="9" y="2" width="6" height="12" rx="3"/>
+      <path d="M5 10v2a7 7 0 0 0 14 0v-2"/>
+      <path d="M12 19v3M8 22h8"/>
+     </svg>
+    </button>
+
+    <button id="send" onclick="sendMessage()" aria-label="전송">↑</button>
    </div>
    <div id="status"></div>
   </div>
@@ -112,9 +252,9 @@ header{height:60px;border-bottom:1px solid #eee;display:flex;align-items:center;
 </div>
 
 <script>
-// Firebase 실제 프로젝트 설정
+// Firebase 설정
 const firebaseConfig = {
- apiKey: "AIzaSyDY3NjN9XhBmYuaioue1Zw1Xt_hzOzQ4M4",
+ apiKey: "AIzaSyDY3NjN9XhBmYuaioue1Zw1Xt_hzOz4M4",
  authDomain: "chatbuddy-a1e78.firebaseapp.com",
  projectId: "chatbuddy-a1e78",
  storageBucket: "chatbuddy-a1e78.firebasestorage.app",
@@ -133,11 +273,14 @@ const messages=document.getElementById("messages");
 const input=document.getElementById("question");
 const imageInput=document.getElementById("imageInput");
 const statusText=document.getElementById("status");
+const micButton=document.getElementById("mic");
 
 let currentUser=null;
 let chats=[];
 let currentChat=null;
 let selectedImage=null;
+let recognition=null;
+let isListening=false;
 
 function storageKey(){
  return "chatBuddyChats_"+currentUser.uid;
@@ -192,6 +335,7 @@ function toggleMenu(){
 }
 
 function newChat(){
+ if(!currentUser)return;
  currentChat={id:Date.now(),title:"새 채팅",messages:[]};
  chats.unshift(currentChat);
  saveChats();
@@ -201,9 +345,12 @@ function newChat(){
 function showChat(chat){
  currentChat=chat;
  messages.innerHTML="";
+
  if(!chat.messages.length){
-  messages.innerHTML='<div id="welcome"><h1>무엇을 도와드릴까요?</h1><p>Chat Buddy와 자유롭게 대화해 보세요.</p></div>';
+  messages.innerHTML=
+   '<div id="welcome"><h1>무엇을 도와드릴까요?</h1><p>Chat Buddy와 자유롭게 대화해 보세요.</p></div>';
  }
+
  chat.messages.forEach(m=>addMessage(m.text,m.type,m.image,false));
  renderHistory();
 }
@@ -211,6 +358,7 @@ function showChat(chat){
 function renderHistory(){
  const box=document.getElementById("history");
  box.innerHTML="";
+
  chats.forEach(chat=>{
   const item=document.createElement("div");
   item.className="history-item";
@@ -235,6 +383,7 @@ function addMessage(text,type,image,save=true){
  }
 
  const content=document.createElement("div");
+ content.className=type==="ai"?"ai-content":"";
  content.textContent=text;
  box.appendChild(content);
 
@@ -255,16 +404,46 @@ function addMessage(text,type,image,save=true){
   }
   saveChats();
  }
+
+ return box;
+}
+
+// AI 답변 위치에 작성 중 표시
+function showTyping(){
+ const welcome=document.getElementById("welcome");
+ if(welcome)welcome.remove();
+
+ const box=document.createElement("div");
+ box.className="message ai";
+ box.id="typingMessage";
+
+ const content=document.createElement("div");
+ content.className="typing-indicator";
+ content.textContent="답변을 작성하고 있습니다";
+
+ const dots=document.createElement("span");
+ dots.className="typing-dots";
+ dots.innerHTML="<span></span><span></span><span></span>";
+
+ content.appendChild(dots);
+ box.appendChild(content);
+
+ messages.appendChild(box);
+ messages.scrollTop=messages.scrollHeight;
+
+ return box;
 }
 
 imageInput.addEventListener("change",()=>{
  const file=imageInput.files[0];
  if(!file)return;
+
  if(!file.type.startsWith("image/")||file.size>5*1024*1024){
   alert("5MB 이하의 이미지 파일을 선택해 주세요.");
   imageInput.value="";
   return;
  }
+
  selectedImage=file;
  statusText.textContent="사진 첨부됨: "+file.name;
 });
@@ -277,18 +456,28 @@ async function sendMessage(){
  const imageUrl=file?URL.createObjectURL(file):null;
 
  addMessage(message||"이 사진을 분석해 줘.","user",imageUrl);
+
  input.value="";
+ input.style.height="auto";
  selectedImage=null;
  imageInput.value="";
- statusText.textContent="답변을 작성하고 있습니다...";
+
+ // 아래 상태 표시 대신 AI 답변 위치에 표시
+ statusText.textContent="";
+ const typingBox=showTyping();
 
  try{
   let response;
+
   if(file){
    const form=new FormData();
    form.append("message",message||"이 사진을 분석해 줘.");
    form.append("image",file);
-   response=await fetch("/api/chat",{method:"POST",body:form});
+
+   response=await fetch("/api/chat",{
+    method:"POST",
+    body:form
+   });
   }else{
    response=await fetch("/api/chat",{
     method:"POST",
@@ -298,38 +487,93 @@ async function sendMessage(){
   }
 
   const data=await response.json();
-  if(!response.ok)throw new Error(data.error||"서버 오류");
-  addMessage(data.reply||"답변을 받지 못했습니다.","ai");
-  speakText(data.reply||"");
+
+  if(!response.ok){
+   throw new Error(data.reply||data.error||"서버 오류");
+  }
+
+  if(!data.reply){
+   throw new Error("AI 답변이 비어 있습니다.");
+  }
+
+  typingBox.remove();
+
+  // 완성된 답변은 검은색 글씨
+  addMessage(data.reply,"ai");
+
+  // AI 답변 자동 음성 재생
+  speakText(data.reply);
+
   statusText.textContent="";
+
  }catch(error){
+  typingBox.remove();
   addMessage("오류가 발생했어요: "+error.message,"ai");
   statusText.textContent="잠시 후 다시 시도해 주세요.";
  }
 }
 
+// 음성 입력
 function startVoice(){
- const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+ const Recognition=
+  window.SpeechRecognition||window.webkitSpeechRecognition;
+
  if(!Recognition){
   alert("Chrome 브라우저에서 음성 입력을 시도해 주세요.");
   return;
  }
- const recognition=new Recognition();
+
+ if(isListening){
+  recognition.stop();
+  return;
+ }
+
+ recognition=new Recognition();
  recognition.lang="ko-KR";
- recognition.onstart=()=>statusText.textContent="말씀해 주세요...";
+ recognition.interimResults=false;
+ recognition.continuous=false;
+
+ recognition.onstart=()=>{
+  isListening=true;
+  micButton.classList.add("listening");
+  statusText.textContent="말씀해 주세요...";
+ };
+
  recognition.onresult=e=>{
   input.value=e.results[0][0].transcript;
   statusText.textContent="음성 입력 완료";
  };
- recognition.onerror=()=>statusText.textContent="마이크 권한을 확인해 주세요.";
- recognition.start();
+
+ recognition.onerror=e=>{
+  statusText.textContent=
+   e.error==="not-allowed"
+    ?"마이크 권한을 허용해 주세요."
+    :"음성 인식 오류가 발생했습니다.";
+ };
+
+ recognition.onend=()=>{
+  isListening=false;
+  micButton.classList.remove("listening");
+ };
+
+ try{
+  recognition.start();
+ }catch(e){
+  isListening=false;
+  micButton.classList.remove("listening");
+  statusText.textContent="마이크를 다시 눌러 주세요.";
+ }
 }
 
+// 자동 음성 답변
 function speakText(text){
  if(!window.speechSynthesis||!text)return;
+
  speechSynthesis.cancel();
+
  const utterance=new SpeechSynthesisUtterance(text);
  utterance.lang="ko-KR";
+ utterance.rate=1;
  speechSynthesis.speak(utterance);
 }
 
@@ -341,8 +585,10 @@ function showSearch(){
 function searchChats(query){
  const box=document.getElementById("history");
  box.innerHTML="";
- chats.filter(c=>c.title.toLowerCase().includes(query.toLowerCase()))
- .forEach(chat=>{
+
+ chats.filter(c=>
+  c.title.toLowerCase().includes(query.toLowerCase())
+ ).forEach(chat=>{
   const item=document.createElement("div");
   item.className="history-item";
   item.textContent=chat.title;
@@ -357,6 +603,8 @@ function showLibrary(){
 
 function logout(){
  if(window.speechSynthesis)speechSynthesis.cancel();
+ if(recognition&&isListening)recognition.stop();
+
  currentChat=null;
  chats=[];
  auth.signOut();
@@ -367,6 +615,11 @@ input.addEventListener("keydown",e=>{
   e.preventDefault();
   sendMessage();
  }
+});
+
+input.addEventListener("input",()=>{
+ input.style.height="auto";
+ input.style.height=Math.min(input.scrollHeight,120)+"px";
 });
 </script>
 </body>
