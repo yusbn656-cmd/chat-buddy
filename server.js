@@ -7,8 +7,8 @@ const PORT = process.env.PORT || 3000;
 
 // Gemini 설정
 const API_KEY = process.env.GEMINI_API_KEY;
-const FREE_MODEL = process.env.GEMINI_FREE_MODEL || "gemini-2.5-flash";
-const PREMIUM_MODEL = process.env.GEMINI_PREMIUM_MODEL || "gemini-2.5-pro";
+const FREE_MODEL = process.env.GEMINI_FREE_MODEL || "gemini-3.8-flash";
+const PREMIUM_MODEL = process.env.GEMINI_PREMIUM_MODEL || "gemini-3.8-pro";
 
 // 파일 업로드 설정
 const upload = multer({
