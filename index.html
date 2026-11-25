@@ -12,35 +12,39 @@
 <style>
 *{box-sizing:border-box}
 body{
- margin:0;background:#f4f4f4;color:#111;
+ margin:0;background:#f2f2f2;color:#111;
  font-family:Arial,"Noto Sans KR",sans-serif
 }
 button{cursor:pointer;border:0;font-family:inherit}
 
-/* 처음 진입 온보딩 (무채색 배경 + 영상) */
+/* 처음 진입 온보딩 (무채색 영상 배경) */
 #onboarding{
  position:fixed;inset:0;z-index:30;
  display:flex;flex-direction:column;justify-content:space-between;
  padding:28px 22px 26px;
- background:#efefef;color:#111;overflow:hidden
+ background:#ececec;color:#111;overflow:hidden
+}
+#bgCanvas{
+ position:absolute;inset:0;width:100%;height:100%;
+ z-index:0;pointer-events:none
 }
 #bgVideo{
  position:absolute;inset:0;width:100%;height:100%;
- object-fit:cover;z-index:0;
- filter:grayscale(100%) brightness(1.06) contrast(1.03);
- opacity:.38;pointer-events:none
+ object-fit:cover;z-index:1;
+ filter:grayscale(100%) brightness(0.95) contrast(1.08);
+ opacity:.45;pointer-events:none
 }
 .mono-overlay{
- position:absolute;inset:0;z-index:1;pointer-events:none;
+ position:absolute;inset:0;z-index:2;pointer-events:none;
  background:linear-gradient(
   180deg,
-  rgba(245,245,245,0.72) 0%,
-  rgba(235,235,235,0.62) 50%,
-  rgba(245,245,245,0.88) 100%
+  rgba(244,244,244,0.68) 0%,
+  rgba(232,232,232,0.56) 50%,
+  rgba(244,244,244,0.85) 100%
  )
 }
 .onboard-inner{
- position:relative;z-index:2;
+ position:relative;z-index:3;
  width:100%;max-width:420px;height:100%;margin:0 auto;
  display:flex;flex-direction:column;justify-content:space-between
 }
@@ -60,7 +64,7 @@ button{cursor:pointer;border:0;font-family:inherit}
 }
 .mono-icon-box{
  width:96px;height:96px;border-radius:24px;
- background:rgba(255,255,255,0.78);
+ background:rgba(255,255,255,0.8);
  border:1px solid rgba(17,17,17,0.12);
  display:flex;align-items:center;justify-content:center;
  font-size:34px;font-weight:800;color:#222;
@@ -74,7 +78,7 @@ button{cursor:pointer;border:0;font-family:inherit}
 }
 .consent-box{
  width:100%;max-height:250px;overflow:auto;text-align:left;
- background:rgba(255,255,255,0.82);border:1px solid rgba(17,17,17,0.12);
+ background:rgba(255,255,255,0.84);border:1px solid rgba(17,17,17,0.12);
  border-radius:16px;padding:14px;font-size:12.5px;line-height:1.65;color:#333
 }
 
@@ -291,8 +295,9 @@ header{
 <body>
 
 <!-- 진입 시 무채색 영상 배경 온보딩 -->
-<div id="onboarding">
- <video id="bgVideo" autoplay muted loop playsinline>
+<div id="onboarding" onclick="ensureBgVideoPlay()">
+ <canvas id="bgCanvas"></canvas>
+ <video id="bgVideo" autoplay muted loop playsinline preload="auto">
   <source src="/intro-bg.mp4" type="video/mp4">
  </video>
  <div class="mono-overlay"></div>
@@ -431,6 +436,8 @@ const onboardingEl = document.getElementById("onboarding");
 const onboardStageEl = document.getElementById("onboardStage");
 const onboardNextBtnEl = document.getElementById("onboardNextBtn");
 const onboardLinksEl = document.getElementById("onboardLinks");
+const bgVideoEl = document.getElementById("bgVideo");
+const bgCanvasEl = document.getElementById("bgCanvas");
 const login = document.getElementById("login");
 const app = document.getElementById("app");
 const messages = document.getElementById("messages");
@@ -438,6 +445,69 @@ const input = document.getElementById("question");
 const imageInput = document.getElementById("imageInput");
 const statusText = document.getElementById("status");
 const micButton = document.getElementById("mic");
+
+let hasRealVideo = false;
+if (bgVideoEl) {
+  bgVideoEl.addEventListener("loadeddata", () => {
+    hasRealVideo = true;
+    bgVideoEl.play().catch(() => {});
+  });
+  bgVideoEl.addEventListener("error", () => {
+    hasRealVideo = false;
+  });
+  bgVideoEl.play().catch(() => {});
+}
+
+function ensureBgVideoPlay() {
+  if (bgVideoEl && hasRealVideo) {
+    bgVideoEl.play().catch(() => {});
+  }
+}
+
+// 영상 파일이 없거나 로딩 전에도 무채색 움직임이 이어지도록 캔버스 구동
+(function startMonochromeMotionBg() {
+  if (!bgCanvasEl) return;
+  const ctx = bgCanvasEl.getContext("2d");
+  let t = 0;
+
+  function resize() {
+    bgCanvasEl.width = window.innerWidth;
+    bgCanvasEl.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  function draw() {
+    const w = bgCanvasEl.width;
+    const h = bgCanvasEl.height;
+    ctx.clearRect(0, 0, w, h);
+
+    ctx.fillStyle = "#ececec";
+    ctx.fillRect(0, 0, w, h);
+
+    if (!hasRealVideo) {
+      t += 0.012;
+      const cx1 = w * (0.5 + Math.cos(t) * 0.25);
+      const cy1 = h * (0.4 + Math.sin(t * 0.8) * 0.2);
+      const grad1 = ctx.createRadialGradient(cx1, cy1, 20, cx1, cy1, Math.max(w, h) * 0.55);
+      grad1.addColorStop(0, "rgba(170, 170, 170, 0.35)");
+      grad1.addColorStop(1, "rgba(236, 236, 236, 0)");
+      ctx.fillStyle = grad1;
+      ctx.fillRect(0, 0, w, h);
+
+      const cx2 = w * (0.5 + Math.sin(t * 0.7) * 0.28);
+      const cy2 = h * (0.6 + Math.cos(t * 0.9) * 0.22);
+      const grad2 = ctx.createRadialGradient(cx2, cy2, 10, cx2, cy2, Math.max(w, h) * 0.45);
+      grad2.addColorStop(0, "rgba(255, 255, 255, 0.65)");
+      grad2.addColorStop(1, "rgba(236, 236, 236, 0)");
+      ctx.fillStyle = grad2;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
 
 const onboardSteps = [
   {
@@ -503,6 +573,7 @@ function renderOnboardStep() {
 }
 
 function nextOnboardStep() {
+  ensureBgVideoPlay();
   if (onboardIndex < onboardSteps.length - 1) {
     onboardIndex += 1;
     renderOnboardStep();
