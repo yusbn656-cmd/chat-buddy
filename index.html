@@ -43,15 +43,7 @@ button{cursor:pointer;border:0;font-family:inherit}
  width:100%;padding:13px;text-align:left;background:transparent;
  border-radius:10px;color:#222;font-size:15px;margin-bottom:5px
 }
-.side-btn.premium-btn{
- background:#111;color:#fff;font-weight:700;text-align:center;margin-top:4px
-}
-.side-btn.premium-btn.active{
- background:#e6f4ea;color:#137333
-}
 .side-btn:hover,.history-item:hover{background:#eaeaea}
-.side-btn.premium-btn:hover{background:#2a2a2a}
-.side-btn.premium-btn.active:hover{background:#d7eedc}
 #history{overflow:auto;flex:1;margin-top:12px}
 .history-item{
  padding:10px;border-radius:8px;cursor:pointer;
@@ -73,13 +65,15 @@ button{cursor:pointer;border:0;font-family:inherit}
 header{
  height:60px;border-bottom:1px solid #eee;
  display:flex;align-items:center;padding:0 16px;
- gap:10px;flex-shrink:0
+ gap:8px;flex-shrink:0
 }
-#menu{font-size:24px;background:white;color:#111}
+#menu{font-size:24px;background:white;color:#111;padding:0 4px 0 0}
 #title{font-size:19px;font-weight:700}
 #headerPlanBadge{
- margin-left:auto;padding:5px 10px;border-radius:999px;
- font-size:12px;font-weight:700;background:#f1f1f1;color:#333
+ padding:3px 8px;border-radius:999px;
+ font-size:11px;font-weight:700;line-height:1.2;
+ background:#f1f1f1;color:#555;
+ white-space:nowrap
 }
 #headerPlanBadge.premium{
  background:#111;color:#fff
@@ -217,9 +211,6 @@ header{
  <button class="side-btn" onclick="newChat()">＋ 새 채팅</button>
  <button class="side-btn" onclick="showSearch()">⌕ 채팅 검색</button>
  <button class="side-btn" onclick="showLibrary()">▤ 자료실</button>
- <button id="premiumBtn" class="side-btn premium-btn" onclick="handlePremiumUpgrade()">
-  쳇버디 프리미엄 (₩4,900/월)
- </button>
  <input id="searchBox" placeholder="대화 검색"
   style="display:none" oninput="searchChats(this.value)">
  <div id="history"></div>
@@ -235,7 +226,7 @@ header{
   <header>
    <button id="menu" onclick="toggleMenu()">☰</button>
    <div id="title">Chat Buddy</div>
-   <span id="headerPlanBadge">무료</span>
+   <button id="headerPlanBadge" type="button" onclick="handlePremiumUpgrade()">무료</button>
   </header>
 
   <section id="messages">
@@ -346,33 +337,23 @@ function saveUserPlan(user, plan) {
 function renderPlanUI() {
   const badge = document.getElementById("userPlanBadge");
   const headerBadge = document.getElementById("headerPlanBadge");
-  const premiumBtn = document.getElementById("premiumBtn");
 
   const google = isGoogleUser(currentUser);
   const isPremium = google && currentPlan === "premium";
 
   if (badge) {
     badge.textContent = isPremium
-      ? "쳇버디 프리미엄 (₩4,900/월)"
+      ? "Chet Buddy Premium (₩4,900/월)"
       : (google ? "무료 등급 (구글)" : "게스트 · 무료 전용");
     badge.className = isPremium ? "plan-badge premium" : "plan-badge";
   }
 
   if (headerBadge) {
-    headerBadge.textContent = isPremium ? "PRO" : "무료";
+    headerBadge.textContent = isPremium ? "Chet Buddy Premium" : "무료";
     headerBadge.className = isPremium ? "premium" : "";
-  }
-
-  if (premiumBtn) {
-    premiumBtn.classList.remove("active");
-    if (!google) {
-      premiumBtn.textContent = "구글 로그인 후 프리미엄 (₩4,900/월)";
-    } else if (isPremium) {
-      premiumBtn.textContent = "✓ 쳇버디 프리미엄 이용 중";
-      premiumBtn.classList.add("active");
-    } else {
-      premiumBtn.textContent = "★ 쳇버디 프리미엄 시작 (₩4,900/월)";
-    }
+    headerBadge.title = isPremium
+      ? "Chet Buddy Premium 이용 중"
+      : "Chet Buddy Premium (₩4,900/월) 시작하기";
   }
 }
 
@@ -382,7 +363,7 @@ async function handlePremiumUpgrade() {
   // 게스트는 프리미엄 불가 -> 구글 로그인 유도
   if (!isGoogleUser(currentUser)) {
     const goGoogle = confirm(
-      "쳇버디 프리미엄(월 4,900원)은 구글 로그인 계정만 이용할 수 있습니다.\n지금 구글 로그인으로 전환할까요?"
+      "Chet Buddy Premium(월 4,900원)은 구글 로그인 계정만 이용할 수 있습니다.\n지금 구글 로그인으로 전환할까요?"
     );
     if (goGoogle) {
       googleLogin();
@@ -391,12 +372,12 @@ async function handlePremiumUpgrade() {
   }
 
   if (currentPlan === "premium") {
-    alert("이미 쳇버디 프리미엄(월 4,900원)을 이용 중입니다.");
+    alert("이미 Chet Buddy Premium(월 4,900원)을 이용 중입니다.");
     return;
   }
 
   const ok = confirm(
-    "쳇버디 프리미엄(월 4,900원)을 시작할까요?\n더 빠르고 똑똑한 답변이 제공됩니다."
+    "Chet Buddy Premium(월 4,900원)을 시작할까요?\n더 빠르고 똑똑한 답변이 제공됩니다."
   );
   if (!ok) return;
 
@@ -411,7 +392,7 @@ async function handlePremiumUpgrade() {
       body: JSON.stringify({
         provider: "google",
         userId: currentUser.uid,
-        planCode: "CHAT_BUDDY_PREMIUM_4900"
+        planCode: "CHET_BUDDY_PREMIUM_4900"
       })
     });
 
@@ -421,7 +402,7 @@ async function handlePremiumUpgrade() {
     }
 
     saveUserPlan(currentUser, data.plan || "premium");
-    alert("쳇버디 프리미엄(월 4,900원)이 활성화되었습니다!");
+    alert("Chet Buddy Premium(월 4,900원)이 활성화되었습니다!");
   } catch (err) {
     alert("오류: " + err.message);
   }
