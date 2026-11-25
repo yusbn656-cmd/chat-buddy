@@ -7,8 +7,12 @@ const PORT = process.env.PORT || 3000;
 
 // Gemini 설정
 const API_KEY = process.env.GEMINI_API_KEY;
-const FREE_MODEL = process.env.GEMINI_FREE_MODEL || "gemini-3.8-flash";
-const PREMIUM_MODEL = process.env.GEMINI_PREMIUM_MODEL || "gemini-3.8-pro";
+const FREE_MODEL = process.env.GEMINI_FREE_MODEL || "gemini-2.5-flash";
+const PREMIUM_MODEL = process.env.GEMINI_PREMIUM_MODEL || "gemini-2.5-pro";
+
+// 토스페이먼츠 시크릿 키 (Render Environment에 TOSS_SECRET_KEY 등록)
+const TOSS_SECRET_KEY = process.env.TOSS_SECRET_KEY || "";
+const PREMIUM_PRICE_KRW = 4900;
 
 // 파일 업로드 설정
 const upload = multer({
@@ -33,13 +37,12 @@ function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// 임시 회원 저장소 (실서비스에서는 Supabase/Firebase/DB로 교체 권장)
-// key: userId (예: "google_123456789")
+// 임시 회원/결제 저장소 (실서비스 운영 시 Firestore/Supabase로 교체 권장)
 const usersDb = new Map();
+const processedOrders = new Set();
 
-// 요청에서 사용자 정보 추출 (실서비스에서는 세션/JWT/DB 조회로 교체)
+// 요청에서 사용자 정보 추출 (구글 로그인만 premium 가능, 게스트는 무조건 free 고정)
 function getRequestUser(req) {
-  // 예: 프론트에서 헤더나 body로 넘기는 경우(임시 테스트용)
   const provider =
     req.body?.provider === "google" || req.headers["x-auth-provider"] === "google"
       ? "google"
@@ -49,7 +52,6 @@ function getRequestUser(req) {
     (req.body?.userId || req.headers["x-user-id"] || "").toString().trim() ||
     "guest_default";
 
-  // 게스트는 절대 DB 프리미엄 권한을 가지지 못하도록 강제
   if (provider !== "google" || userId === "guest_default") {
     return {
       id: userId,
@@ -68,7 +70,7 @@ function getRequestUser(req) {
   };
 }
 
-// 실제 적용할 등급 판별: 구글 로그인 + 유효한 프리미엄 만료일일 때만 'premium'
+// 실제 적용할 등급 판별
 function resolveEffectivePlan(user) {
   if (!user || user.provider !== "google") {
     return "free";
@@ -88,14 +90,14 @@ function resolveEffectivePlan(user) {
   return "premium";
 }
 
-// 등급별 모델 및 옵션 설정
+// 등급별 Gemini 모델 및 프롬프트 설정
 function getGeminiSettings(plan) {
   if (plan === "premium") {
     return {
       model: PREMIUM_MODEL,
       maxOutputTokens: 2048,
       systemInstructionText:
-        "너는 쳇버디 프리미엄(월 4,900원) AI 챗봇이다. " +
+        "너는 Chet Buddy Premium(월 4,900원) AI 챗봇이다. " +
         "더 깊고 정확하며 구조화된 답변을 빠르고 똑똑하게 제공한다. " +
         "중요한 문제에서는 단계별로 신중하게 분석하고, 일반 대화에서는 자연스럽고 친근하게 답한다. " +
         "모든 연령이 이해할 수 있도록 친절하고 안전하게 한국어로 답한다."
@@ -159,39 +161,131 @@ async function askGemini(body, modelName = FREE_MODEL) {
       }
     }
 
-    // 1초, 2초 순서로 대기
     await wait(attempt * 1000);
   }
 
   throw new Error("AI 서버가 응답하지 않습니다.");
 }
 
-// 구글 로그인 전용 쳇버디 프리미엄(4,900원/월) 활성화 예시 엔드포인트
-// 실제 결제 연동 시 PG/결제사 검증 완료 후 호출하도록 연결
-app.post("/api/premium/activate", (req, res) => {
+// 사용자 현재 구독 상태 조회 API
+app.get("/api/subscription/status", (req, res) => {
   const user = getRequestUser(req);
-
-  if (user.provider !== "google" || !user.id || user.id === "guest_default") {
-    return res.status(403).json({
-      error: "쳇버디 프리미엄(월 4,900원)은 구글 로그인 계정만 이용할 수 있습니다."
-    });
-  }
-
-  const thirtyDaysLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
-  usersDb.set(user.id, {
-    id: user.id,
-    provider: "google",
-    plan: "premium",
-    priceKrw: 4900,
-    premiumExpiresAt: thirtyDaysLater
-  });
+  const effectivePlan = resolveEffectivePlan(user);
 
   return res.json({
-    message: "쳇버디 프리미엄이 활성화되었습니다.",
-    plan: "premium",
-    premiumExpiresAt: thirtyDaysLater
+    provider: user.provider,
+    plan: effectivePlan,
+    premiumExpiresAt: effectivePlan === "premium" ? user.premiumExpiresAt : null
   });
+});
+
+// 토스페이먼츠 결제 승인 및 Chet Buddy Premium(4,900원) 활성화 API
+app.post("/api/payments/toss/confirm", async (req, res) => {
+  try {
+    if (!TOSS_SECRET_KEY) {
+      return res.status(500).json({
+        error: "서버에 TOSS_SECRET_KEY 환경변수가 설정되지 않았습니다."
+      });
+    }
+
+    const user = getRequestUser(req);
+    if (user.provider !== "google" || !user.id || user.id === "guest_default") {
+      return res.status(403).json({
+        error: "Chet Buddy Premium은 구글 로그인 계정만 결제할 수 있습니다."
+      });
+    }
+
+    const { paymentKey, orderId, amount } = req.body || {};
+    const numericAmount = Number(amount);
+
+    if (!paymentKey || !orderId || !numericAmount) {
+      return res.status(400).json({
+        error: "필수 결제 정보(paymentKey, orderId, amount)가 누락되었습니다."
+      });
+    }
+
+    // 결제 금액 변조 검증 (반드시 4,900원이어야 함)
+    if (numericAmount !== PREMIUM_PRICE_KRW) {
+      return res.status(400).json({
+        error: `결제 금액이 일치하지 않습니다. (요청 금액: ${numericAmount}원)`
+      });
+    }
+
+    // 이미 처리된 주문 중복 요청 방지
+    if (processedOrders.has(orderId)) {
+      const existing = usersDb.get(user.id);
+      return res.json({
+        message: "이미 승인 완료된 결제입니다.",
+        plan: existing?.plan || "premium",
+        premiumExpiresAt: existing?.premiumExpiresAt || null
+      });
+    }
+
+    // 토스페이먼츠 결제 승인 API 호출 (Basic 인증: secretKey + ":")
+    const encryptedSecretKey =
+      "Basic " + Buffer.from(`${TOSS_SECRET_KEY}:`).toString("base64");
+
+    const tossResponse = await fetch(
+      "https://api.tosspayments.com/v1/payments/confirm",
+      {
+        method: "POST",
+        headers: {
+          Authorization: encryptedSecretKey,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          paymentKey,
+          orderId,
+          amount: numericAmount
+        })
+      }
+    );
+
+    const tossData = await tossResponse.json();
+
+    if (!tossResponse.ok || tossData.status !== "DONE") {
+      console.error("토스페이먼츠 승인 실패:", tossData);
+      return res.status(tossResponse.status || 400).json({
+        error: tossData.message || "토스페이먼츠 결제 승인에 실패했습니다.",
+        code: tossData.code || "TOSS_CONFIRM_FAILED"
+      });
+    }
+
+    // 토스 응답 금액 재검증
+    if (Number(tossData.totalAmount) !== PREMIUM_PRICE_KRW) {
+      return res.status(400).json({
+        error: "승인된 결제 금액이 4,900원과 일치하지 않습니다."
+      });
+    }
+
+    processedOrders.add(orderId);
+
+    const thirtyDaysLater = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000
+    ).toISOString();
+
+    usersDb.set(user.id, {
+      id: user.id,
+      provider: "google",
+      plan: "premium",
+      priceKrw: PREMIUM_PRICE_KRW,
+      lastOrderId: orderId,
+      lastPaymentKey: paymentKey,
+      premiumExpiresAt: thirtyDaysLater
+    });
+
+    return res.json({
+      message: "Chet Buddy Premium 결제가 완료되었습니다.",
+      plan: "premium",
+      premiumExpiresAt: thirtyDaysLater,
+      orderName: tossData.orderName
+    });
+  } catch (error) {
+    console.error("결제 승인 서버 오류:", error);
+    return res.status(500).json({
+      error: "결제 승인 처리 중 서버 오류가 발생했습니다."
+    });
+  }
 });
 
 // AI 채팅
@@ -221,7 +315,6 @@ app.post("/api/chat", upload.single("image"), async (req, res) => {
       parts.push({ text: message });
     }
 
-    // 사진 첨부
     if (req.file) {
       parts.push({
         inlineData: {
