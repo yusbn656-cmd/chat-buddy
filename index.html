@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -44,13 +43,29 @@ button{cursor:pointer;border:0;font-family:inherit}
  width:100%;padding:13px;text-align:left;background:transparent;
  border-radius:10px;color:#222;font-size:15px;margin-bottom:5px
 }
+.side-btn.premium-btn{
+ background:#111;color:#fff;font-weight:700;text-align:center;margin-top:4px
+}
+.side-btn.premium-btn.active{
+ background:#e6f4ea;color:#137333
+}
 .side-btn:hover,.history-item:hover{background:#eaeaea}
+.side-btn.premium-btn:hover{background:#2a2a2a}
+.side-btn.premium-btn.active:hover{background:#d7eedc}
 #history{overflow:auto;flex:1;margin-top:12px}
 .history-item{
  padding:10px;border-radius:8px;cursor:pointer;
  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px
 }
 #userInfo{border-top:1px solid #ddd;padding-top:12px;font-size:13px;color:#555}
+.plan-badge{
+ display:inline-block;margin:6px 0 8px;padding:4px 8px;
+ border-radius:999px;font-size:12px;font-weight:700;
+ background:#ececec;color:#333
+}
+.plan-badge.premium{
+ background:#111;color:#fff
+}
 #shade{display:none;position:fixed;inset:0;background:#0005;z-index:9}
 #shade.show{display:block}
 
@@ -58,10 +73,17 @@ button{cursor:pointer;border:0;font-family:inherit}
 header{
  height:60px;border-bottom:1px solid #eee;
  display:flex;align-items:center;padding:0 16px;
- gap:14px;flex-shrink:0
+ gap:10px;flex-shrink:0
 }
 #menu{font-size:24px;background:white;color:#111}
 #title{font-size:19px;font-weight:700}
+#headerPlanBadge{
+ margin-left:auto;padding:5px 10px;border-radius:999px;
+ font-size:12px;font-weight:700;background:#f1f1f1;color:#333
+}
+#headerPlanBadge.premium{
+ background:#111;color:#fff
+}
 
 #messages{
  flex:1;overflow:auto;width:100%;max-width:850px;
@@ -195,11 +217,15 @@ header{
  <button class="side-btn" onclick="newChat()">＋ 새 채팅</button>
  <button class="side-btn" onclick="showSearch()">⌕ 채팅 검색</button>
  <button class="side-btn" onclick="showLibrary()">▤ 자료실</button>
+ <button id="premiumBtn" class="side-btn premium-btn" onclick="handlePremiumUpgrade()">
+  쳇버디 프리미엄 (₩4,900/월)
+ </button>
  <input id="searchBox" placeholder="대화 검색"
   style="display:none" oninput="searchChats(this.value)">
  <div id="history"></div>
  <div id="userInfo">
   <div id="userEmail"></div>
+  <div id="userPlanBadge" class="plan-badge">무료 등급</div>
   <button class="side-btn" onclick="logout()">로그아웃</button>
  </div>
 </div>
@@ -209,6 +235,7 @@ header{
   <header>
    <button id="menu" onclick="toggleMenu()">☰</button>
    <div id="title">Chat Buddy</div>
+   <span id="headerPlanBadge">무료</span>
   </header>
 
   <section id="messages">
@@ -253,7 +280,6 @@ header{
 
 <script>
 // Firebase 설정
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyDY3NjN9XhBmYuaioue1Zw1Xt_hzOzQ4M4",
   authDomain: "chatbuddy-a1e78.firebaseapp.com",
@@ -265,362 +291,500 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth();
-const provider=new firebase.auth.GoogleAuthProvider();
+const auth = firebase.auth();
+const provider = new firebase.auth.GoogleAuthProvider();
 
-const login=document.getElementById("login");
-const app=document.getElementById("app");
-const messages=document.getElementById("messages");
-const input=document.getElementById("question");
-const imageInput=document.getElementById("imageInput");
-const statusText=document.getElementById("status");
-const micButton=document.getElementById("mic");
+const login = document.getElementById("login");
+const app = document.getElementById("app");
+const messages = document.getElementById("messages");
+const input = document.getElementById("question");
+const imageInput = document.getElementById("imageInput");
+const statusText = document.getElementById("status");
+const micButton = document.getElementById("mic");
 
-let currentUser=null;
-let chats=[];
-let currentChat=null;
-let selectedImage=null;
-let recognition=null;
-let isListening=false;
+let currentUser = null;
+let currentPlan = "free";
+let chats = [];
+let currentChat = null;
+let selectedImage = null;
+let recognition = null;
+let isListening = false;
 
-function storageKey(){
- return "chatBuddyChats_"+currentUser.uid;
+function isGoogleUser(user) {
+  return Boolean(user && !user.isAnonymous);
 }
 
-function loadChats(){
- try{
-  chats=JSON.parse(localStorage.getItem(storageKey())||"[]");
- }catch(e){chats=[]}
- renderHistory();
+function getAuthProviderName(user) {
+  return isGoogleUser(user) ? "google" : "guest";
 }
 
-function saveChats(){
- localStorage.setItem(storageKey(),JSON.stringify(chats));
- renderHistory();
+function planStorageKey(user) {
+  return "chatBuddyPlan_" + user.uid;
 }
 
-function googleLogin(){
- document.getElementById("loginStatus").textContent="Google 로그인 중...";
- auth.signInWithPopup(provider).catch(e=>{
-  document.getElementById("loginStatus").textContent="로그인 오류: "+e.message;
- });
+function loadUserPlan(user) {
+  // 게스트는 무조건 무료 등급 고정
+  if (!isGoogleUser(user)) {
+    return "free";
+  }
+  const saved = localStorage.getItem(planStorageKey(user));
+  return saved === "premium" ? "premium" : "free";
 }
 
-function guestLogin(){
- document.getElementById("loginStatus").textContent="게스트 로그인 중...";
- auth.signInAnonymously().catch(e=>{
-  document.getElementById("loginStatus").textContent="게스트 로그인 오류: "+e.message;
- });
+function saveUserPlan(user, plan) {
+  if (!isGoogleUser(user)) {
+    currentPlan = "free";
+    renderPlanUI();
+    return;
+  }
+  const normalized = plan === "premium" ? "premium" : "free";
+  currentPlan = normalized;
+  localStorage.setItem(planStorageKey(user), normalized);
+  renderPlanUI();
 }
 
-auth.onAuthStateChanged(user=>{
- if(user){
-  currentUser=user;
-  login.style.display="none";
-  app.style.display="block";
-  document.getElementById("userEmail").textContent=
-   user.isAnonymous?"게스트 계정":(user.email||"Google 계정");
-  loadChats();
-  currentChat=null;
-  newChat();
- }else{
-  currentUser=null;
-  app.style.display="none";
-  login.style.display="flex";
- }
+function renderPlanUI() {
+  const badge = document.getElementById("userPlanBadge");
+  const headerBadge = document.getElementById("headerPlanBadge");
+  const premiumBtn = document.getElementById("premiumBtn");
+
+  const google = isGoogleUser(currentUser);
+  const isPremium = google && currentPlan === "premium";
+
+  if (badge) {
+    badge.textContent = isPremium
+      ? "쳇버디 프리미엄 (₩4,900/월)"
+      : (google ? "무료 등급 (구글)" : "게스트 · 무료 전용");
+    badge.className = isPremium ? "plan-badge premium" : "plan-badge";
+  }
+
+  if (headerBadge) {
+    headerBadge.textContent = isPremium ? "PRO" : "무료";
+    headerBadge.className = isPremium ? "premium" : "";
+  }
+
+  if (premiumBtn) {
+    premiumBtn.classList.remove("active");
+    if (!google) {
+      premiumBtn.textContent = "구글 로그인 후 프리미엄 (₩4,900/월)";
+    } else if (isPremium) {
+      premiumBtn.textContent = "✓ 쳇버디 프리미엄 이용 중";
+      premiumBtn.classList.add("active");
+    } else {
+      premiumBtn.textContent = "★ 쳇버디 프리미엄 시작 (₩4,900/월)";
+    }
+  }
+}
+
+async function handlePremiumUpgrade() {
+  if (!currentUser) return;
+
+  // 게스트는 프리미엄 불가 -> 구글 로그인 유도
+  if (!isGoogleUser(currentUser)) {
+    const goGoogle = confirm(
+      "쳇버디 프리미엄(월 4,900원)은 구글 로그인 계정만 이용할 수 있습니다.\n지금 구글 로그인으로 전환할까요?"
+    );
+    if (goGoogle) {
+      googleLogin();
+    }
+    return;
+  }
+
+  if (currentPlan === "premium") {
+    alert("이미 쳇버디 프리미엄(월 4,900원)을 이용 중입니다.");
+    return;
+  }
+
+  const ok = confirm(
+    "쳇버디 프리미엄(월 4,900원)을 시작할까요?\n더 빠르고 똑똑한 답변이 제공됩니다."
+  );
+  if (!ok) return;
+
+  try {
+    const res = await fetch("/api/premium/activate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-auth-provider": "google",
+        "x-user-id": currentUser.uid
+      },
+      body: JSON.stringify({
+        provider: "google",
+        userId: currentUser.uid,
+        planCode: "CHAT_BUDDY_PREMIUM_4900"
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "프리미엄 활성화에 실패했습니다.");
+    }
+
+    saveUserPlan(currentUser, data.plan || "premium");
+    alert("쳇버디 프리미엄(월 4,900원)이 활성화되었습니다!");
+  } catch (err) {
+    alert("오류: " + err.message);
+  }
+}
+
+function storageKey() {
+  return "chatBuddyChats_" + currentUser.uid;
+}
+
+function loadChats() {
+  try {
+    chats = JSON.parse(localStorage.getItem(storageKey()) || "[]");
+  } catch (e) {
+    chats = [];
+  }
+  renderHistory();
+}
+
+function saveChats() {
+  localStorage.setItem(storageKey(), JSON.stringify(chats));
+  renderHistory();
+}
+
+function googleLogin() {
+  document.getElementById("loginStatus").textContent = "Google 로그인 중...";
+  auth.signInWithPopup(provider).catch(e => {
+    document.getElementById("loginStatus").textContent = "로그인 오류: " + e.message;
+  });
+}
+
+function guestLogin() {
+  document.getElementById("loginStatus").textContent = "게스트 로그인 중...";
+  auth.signInAnonymously().catch(e => {
+    document.getElementById("loginStatus").textContent = "게스트 로그인 오류: " + e.message;
+  });
+}
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    currentUser = user;
+    currentPlan = loadUserPlan(user);
+    login.style.display = "none";
+    app.style.display = "block";
+    document.getElementById("userEmail").textContent =
+      user.isAnonymous ? "게스트 계정" : (user.email || "Google 계정");
+    renderPlanUI();
+    loadChats();
+    currentChat = null;
+    newChat();
+  } else {
+    currentUser = null;
+    currentPlan = "free";
+    app.style.display = "none";
+    login.style.display = "flex";
+  }
 });
 
-function toggleMenu(){
- document.getElementById("sidebar").classList.toggle("open");
- document.getElementById("shade").classList.toggle("show");
+function toggleMenu() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("shade").classList.toggle("show");
 }
 
-function newChat(){
- if(!currentUser)return;
- currentChat={id:Date.now(),title:"새 채팅",messages:[]};
- chats.unshift(currentChat);
- saveChats();
- showChat(currentChat);
-}
-
-function showChat(chat){
- currentChat=chat;
- messages.innerHTML="";
-
- if(!chat.messages.length){
-  messages.innerHTML=
-   '<div id="welcome"><h1>무엇을 도와드릴까요?</h1><p>Chat Buddy와 자유롭게 대화해 보세요.</p></div>';
- }
-
- chat.messages.forEach(m=>addMessage(m.text,m.type,m.image,false));
- renderHistory();
-}
-
-function renderHistory(){
- const box=document.getElementById("history");
- box.innerHTML="";
-
- chats.forEach(chat=>{
-  const item=document.createElement("div");
-  item.className="history-item";
-  item.textContent=chat.title;
-  item.onclick=()=>showChat(chat);
-  box.appendChild(item);
- });
-}
-
-function addMessage(text,type,image,save=true){
- const welcome=document.getElementById("welcome");
- if(welcome)welcome.remove();
-
- const box=document.createElement("div");
- box.className="message "+type;
-
- if(image){
-  const img=document.createElement("img");
-  img.src=image;
-  img.className="photo";
-  box.appendChild(img);
- }
-
- const content=document.createElement("div");
- content.className=type==="ai"?"ai-content":"";
- content.textContent=text;
- box.appendChild(content);
-
- if(type==="ai"){
-  const note=document.createElement("div");
-  note.className="note";
-  note.textContent="검색결과가 늦게 반영될 때, 콘텐츠 노출 변화를 추적하는 방법이 있습니다";
-  box.appendChild(note);
- }
-
- messages.appendChild(box);
- messages.scrollTop=messages.scrollHeight;
-
- if(save && currentChat){
-  currentChat.messages.push({text,type,image:image||null});
-  if(type==="user"&&currentChat.title==="새 채팅"){
-   currentChat.title=text.slice(0,25)||"사진 질문";
-  }
+function newChat() {
+  if (!currentUser) return;
+  currentChat = { id: Date.now(), title: "새 채팅", messages: [] };
+  chats.unshift(currentChat);
   saveChats();
- }
+  showChat(currentChat);
+}
 
- return box;
+function showChat(chat) {
+  currentChat = chat;
+  messages.innerHTML = "";
+
+  if (!chat.messages.length) {
+    messages.innerHTML =
+      '<div id="welcome"><h1>무엇을 도와드릴까요?</h1><p>Chat Buddy와 자유롭게 대화해 보세요.</p></div>';
+  }
+
+  chat.messages.forEach(m => addMessage(m.text, m.type, m.image, false));
+  renderHistory();
+}
+
+function renderHistory() {
+  const box = document.getElementById("history");
+  box.innerHTML = "";
+
+  chats.forEach(chat => {
+    const item = document.createElement("div");
+    item.className = "history-item";
+    item.textContent = chat.title;
+    item.onclick = () => showChat(chat);
+    box.appendChild(item);
+  });
+}
+
+function addMessage(text, type, image, save = true) {
+  const welcome = document.getElementById("welcome");
+  if (welcome) welcome.remove();
+
+  const box = document.createElement("div");
+  box.className = "message " + type;
+
+  if (image) {
+    const img = document.createElement("img");
+    img.src = image;
+    img.className = "photo";
+    box.appendChild(img);
+  }
+
+  const content = document.createElement("div");
+  content.className = type === "ai" ? "ai-content" : "";
+  content.textContent = text;
+  box.appendChild(content);
+
+  if (type === "ai") {
+    const note = document.createElement("div");
+    note.className = "note";
+    note.textContent = "검색결과가 늦게 반영될 때, 콘텐츠 노출 변화를 추적하는 방법이 있습니다";
+    box.appendChild(note);
+  }
+
+  messages.appendChild(box);
+  messages.scrollTop = messages.scrollHeight;
+
+  if (save && currentChat) {
+    currentChat.messages.push({ text, type, image: image || null });
+    if (type === "user" && currentChat.title === "새 채팅") {
+      currentChat.title = text.slice(0, 25) || "사진 질문";
+    }
+    saveChats();
+  }
+
+  return box;
 }
 
 // AI 답변 위치에 작성 중 표시
-function showTyping(){
- const welcome=document.getElementById("welcome");
- if(welcome)welcome.remove();
+function showTyping() {
+  const welcome = document.getElementById("welcome");
+  if (welcome) welcome.remove();
 
- const box=document.createElement("div");
- box.className="message ai";
- box.id="typingMessage";
+  const box = document.createElement("div");
+  box.className = "message ai";
+  box.id = "typingMessage";
 
- const content=document.createElement("div");
- content.className="typing-indicator";
- content.textContent="답변을 작성하고 있습니다";
+  const content = document.createElement("div");
+  content.className = "typing-indicator";
+  content.textContent = "답변을 작성하고 있습니다";
 
- const dots=document.createElement("span");
- dots.className="typing-dots";
- dots.innerHTML="<span></span><span></span><span></span>";
+  const dots = document.createElement("span");
+  dots.className = "typing-dots";
+  dots.innerHTML = "<span></span><span></span><span></span>";
 
- content.appendChild(dots);
- box.appendChild(content);
+  content.appendChild(dots);
+  box.appendChild(content);
 
- messages.appendChild(box);
- messages.scrollTop=messages.scrollHeight;
+  messages.appendChild(box);
+  messages.scrollTop = messages.scrollHeight;
 
- return box;
+  return box;
 }
 
-imageInput.addEventListener("change",()=>{
- const file=imageInput.files[0];
- if(!file)return;
+imageInput.addEventListener("change", () => {
+  const file = imageInput.files[0];
+  if (!file) return;
 
- if(!file.type.startsWith("image/")||file.size>5*1024*1024){
-  alert("5MB 이하의 이미지 파일을 선택해 주세요.");
-  imageInput.value="";
-  return;
- }
+  if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) {
+    alert("5MB 이하의 이미지 파일을 선택해 주세요.");
+    imageInput.value = "";
+    return;
+  }
 
- selectedImage=file;
- statusText.textContent="사진 첨부됨: "+file.name;
+  selectedImage = file;
+  statusText.textContent = "사진 첨부됨: " + file.name;
 });
 
-async function sendMessage(){
- const message=input.value.trim();
- if(!message&&!selectedImage)return;
+async function sendMessage() {
+  const message = input.value.trim();
+  if (!message && !selectedImage) return;
 
- const file=selectedImage;
- const imageUrl=file?URL.createObjectURL(file):null;
+  const file = selectedImage;
+  const imageUrl = file ? URL.createObjectURL(file) : null;
 
- addMessage(message||"이 사진을 분석해 줘.","user",imageUrl);
+  addMessage(message || "이 사진을 분석해 줘.", "user", imageUrl);
 
- input.value="";
- input.style.height="auto";
- selectedImage=null;
- imageInput.value="";
+  input.value = "";
+  input.style.height = "auto";
+  selectedImage = null;
+  imageInput.value = "";
 
- // 아래 상태 표시 대신 AI 답변 위치에 표시
- statusText.textContent="";
- const typingBox=showTyping();
+  statusText.textContent = "";
+  const typingBox = showTyping();
 
- try{
-  let response;
+  const authProvider = getAuthProviderName(currentUser);
+  const uid = currentUser ? currentUser.uid : "guest_default";
 
-  if(file){
-   const form=new FormData();
-   form.append("message",message||"이 사진을 분석해 줘.");
-   form.append("image",file);
+  try {
+    let response;
 
-   response=await fetch("/api/chat",{
-    method:"POST",
-    body:form
-   });
-  }else{
-   response=await fetch("/api/chat",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({message})
-   });
+    if (file) {
+      const form = new FormData();
+      form.append("message", message || "이 사진을 분석해 줘.");
+      form.append("provider", authProvider);
+      form.append("userId", uid);
+      form.append("image", file);
+
+      response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "x-auth-provider": authProvider,
+          "x-user-id": uid
+        },
+        body: form
+      });
+    } else {
+      response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-auth-provider": authProvider,
+          "x-user-id": uid
+        },
+        body: JSON.stringify({
+          message,
+          provider: authProvider,
+          userId: uid
+        })
+      });
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.reply || data.error || "서버 오류");
+    }
+
+    if (!data.reply) {
+      throw new Error("AI 답변이 비어 있습니다.");
+    }
+
+    if (data.plan) {
+      saveUserPlan(currentUser, data.plan);
+    }
+
+    typingBox.remove();
+    addMessage(data.reply, "ai");
+    speakText(data.reply);
+    statusText.textContent = "";
+  } catch (error) {
+    typingBox.remove();
+    addMessage("오류가 발생했어요: " + error.message, "ai");
+    statusText.textContent = "잠시 후 다시 시도해 주세요.";
   }
-
-  const data=await response.json();
-
-  if(!response.ok){
-   throw new Error(data.reply||data.error||"서버 오류");
-  }
-
-  if(!data.reply){
-   throw new Error("AI 답변이 비어 있습니다.");
-  }
-
-  typingBox.remove();
-
-  // 완성된 답변은 검은색 글씨
-  addMessage(data.reply,"ai");
-
-  // AI 답변 자동 음성 재생
-  speakText(data.reply);
-
-  statusText.textContent="";
-
- }catch(error){
-  typingBox.remove();
-  addMessage("오류가 발생했어요: "+error.message,"ai");
-  statusText.textContent="잠시 후 다시 시도해 주세요.";
- }
 }
 
 // 음성 입력
-function startVoice(){
- const Recognition=
-  window.SpeechRecognition||window.webkitSpeechRecognition;
+function startVoice() {
+  const Recognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
 
- if(!Recognition){
-  alert("Chrome 브라우저에서 음성 입력을 시도해 주세요.");
-  return;
- }
+  if (!Recognition) {
+    alert("Chrome 브라우저에서 음성 입력을 시도해 주세요.");
+    return;
+  }
 
- if(isListening){
-  recognition.stop();
-  return;
- }
+  if (isListening) {
+    recognition.stop();
+    return;
+  }
 
- recognition=new Recognition();
- recognition.lang="ko-KR";
- recognition.interimResults=false;
- recognition.continuous=false;
+  recognition = new Recognition();
+  recognition.lang = "ko-KR";
+  recognition.interimResults = false;
+  recognition.continuous = false;
 
- recognition.onstart=()=>{
-  isListening=true;
-  micButton.classList.add("listening");
-  statusText.textContent="말씀해 주세요...";
- };
+  recognition.onstart = () => {
+    isListening = true;
+    micButton.classList.add("listening");
+    statusText.textContent = "말씀해 주세요...";
+  };
 
- recognition.onresult=e=>{
-  input.value=e.results[0][0].transcript;
-  statusText.textContent="음성 입력 완료";
- };
+  recognition.onresult = e => {
+    input.value = e.results[0][0].transcript;
+    statusText.textContent = "음성 입력 완료";
+  };
 
- recognition.onerror=e=>{
-  statusText.textContent=
-   e.error==="not-allowed"
-    ?"마이크 권한을 허용해 주세요."
-    :"음성 인식 오류가 발생했습니다.";
- };
+  recognition.onerror = e => {
+    statusText.textContent =
+      e.error === "not-allowed"
+        ? "마이크 권한을 허용해 주세요."
+        : "음성 인식 오류가 발생했습니다.";
+  };
 
- recognition.onend=()=>{
-  isListening=false;
-  micButton.classList.remove("listening");
- };
+  recognition.onend = () => {
+    isListening = false;
+    micButton.classList.remove("listening");
+  };
 
- try{
-  recognition.start();
- }catch(e){
-  isListening=false;
-  micButton.classList.remove("listening");
-  statusText.textContent="마이크를 다시 눌러 주세요.";
- }
+  try {
+    recognition.start();
+  } catch (e) {
+    isListening = false;
+    micButton.classList.remove("listening");
+    statusText.textContent = "마이크를 다시 눌러 주세요.";
+  }
 }
 
 // 자동 음성 답변
-function speakText(text){
- if(!window.speechSynthesis||!text)return;
+function speakText(text) {
+  if (!window.speechSynthesis || !text) return;
 
- speechSynthesis.cancel();
+  speechSynthesis.cancel();
 
- const utterance=new SpeechSynthesisUtterance(text);
- utterance.lang="ko-KR";
- utterance.rate=1;
- speechSynthesis.speak(utterance);
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "ko-KR";
+  utterance.rate = 1;
+  speechSynthesis.speak(utterance);
 }
 
-function showSearch(){
- const box=document.getElementById("searchBox");
- box.style.display=box.style.display==="none"?"block":"none";
+function showSearch() {
+  const box = document.getElementById("searchBox");
+  box.style.display = box.style.display === "none" ? "block" : "none";
 }
 
-function searchChats(query){
- const box=document.getElementById("history");
- box.innerHTML="";
+function searchChats(query) {
+  const box = document.getElementById("history");
+  box.innerHTML = "";
 
- chats.filter(c=>
-  c.title.toLowerCase().includes(query.toLowerCase())
- ).forEach(chat=>{
-  const item=document.createElement("div");
-  item.className="history-item";
-  item.textContent=chat.title;
-  item.onclick=()=>showChat(chat);
-  box.appendChild(item);
- });
+  chats.filter(c =>
+    c.title.toLowerCase().includes(query.toLowerCase())
+  ).forEach(chat => {
+    const item = document.createElement("div");
+    item.className = "history-item";
+    item.textContent = chat.title;
+    item.onclick = () => showChat(chat);
+    box.appendChild(item);
+  });
 }
 
-function showLibrary(){
- alert("자료실 기능은 다음 업데이트에서 연결할 예정입니다.");
+function showLibrary() {
+  alert("자료실 기능은 다음 업데이트에서 연결할 예정입니다.");
 }
 
-function logout(){
- if(window.speechSynthesis)speechSynthesis.cancel();
- if(recognition&&isListening)recognition.stop();
+function logout() {
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  if (recognition && isListening) recognition.stop();
 
- currentChat=null;
- chats=[];
- auth.signOut();
+  currentChat = null;
+  chats = [];
+  currentPlan = "free";
+  auth.signOut();
 }
 
-input.addEventListener("keydown",e=>{
- if(e.key==="Enter"&&!e.shiftKey){
-  e.preventDefault();
-  sendMessage();
- }
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
 });
 
-input.addEventListener("input",()=>{
- input.style.height="auto";
- input.style.height=Math.min(input.scrollHeight,120)+"px";
+input.addEventListener("input", () => {
+  input.style.height = "auto";
+  input.style.height = Math.min(input.scrollHeight, 120) + "px";
 });
 </script>
 </body>
