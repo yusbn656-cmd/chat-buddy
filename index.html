@@ -7,31 +7,106 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-<!-- 토스페이먼츠 SDK v2 -->
 <script src="https://js.tosspayments.com/v2/standard"></script>
 
 <style>
 *{box-sizing:border-box}
 body{
- margin:0;background:#fff;color:#111;
+ margin:0;background:#f4f4f4;color:#111;
  font-family:Arial,"Noto Sans KR",sans-serif
 }
 button{cursor:pointer;border:0;font-family:inherit}
 
-#login{
- position:fixed;inset:0;background:white;z-index:20;
- display:flex;align-items:center;justify-content:center;padding:20px
+/* 처음 진입 온보딩 (무채색 배경 + 영상) */
+#onboarding{
+ position:fixed;inset:0;z-index:30;
+ display:flex;flex-direction:column;justify-content:space-between;
+ padding:28px 22px 26px;
+ background:#efefef;color:#111;overflow:hidden
 }
-.login-box{width:100%;max-width:380px;text-align:center}
-.login-box h1{font-size:34px;margin-bottom:10px}
-.login-box p{color:#777;margin-bottom:30px}
+#bgVideo{
+ position:absolute;inset:0;width:100%;height:100%;
+ object-fit:cover;z-index:0;
+ filter:grayscale(100%) brightness(1.06) contrast(1.03);
+ opacity:.38;pointer-events:none
+}
+.mono-overlay{
+ position:absolute;inset:0;z-index:1;pointer-events:none;
+ background:linear-gradient(
+  180deg,
+  rgba(245,245,245,0.72) 0%,
+  rgba(235,235,235,0.62) 50%,
+  rgba(245,245,245,0.88) 100%
+ )
+}
+.onboard-inner{
+ position:relative;z-index:2;
+ width:100%;max-width:420px;height:100%;margin:0 auto;
+ display:flex;flex-direction:column;justify-content:space-between
+}
+.step-bars{
+ display:flex;gap:6px;width:140px;margin:0 auto
+}
+.step-bar{
+ flex:1;height:3px;border-radius:999px;
+ background:rgba(17,17,17,0.16);transition:.25s
+}
+.step-bar.active{background:#111}
+
+.onboard-stage{
+ flex:1;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;
+ text-align:center;padding:16px 4px
+}
+.mono-icon-box{
+ width:96px;height:96px;border-radius:24px;
+ background:rgba(255,255,255,0.78);
+ border:1px solid rgba(17,17,17,0.12);
+ display:flex;align-items:center;justify-content:center;
+ font-size:34px;font-weight:800;color:#222;
+ margin-bottom:24px;box-shadow:0 10px 28px rgba(0,0,0,0.06)
+}
+.onboard-title{
+ font-size:27px;font-weight:800;line-height:1.3;margin:0 0 12px;color:#111
+}
+.onboard-desc{
+ font-size:15px;line-height:1.6;color:#555;margin:0;max-width:340px
+}
+.consent-box{
+ width:100%;max-height:250px;overflow:auto;text-align:left;
+ background:rgba(255,255,255,0.82);border:1px solid rgba(17,17,17,0.12);
+ border-radius:16px;padding:14px;font-size:12.5px;line-height:1.65;color:#333
+}
+
+.onboard-bottom{width:100%}
+.primary-pill-btn{
+ width:100%;padding:16px;border-radius:999px;
+ background:#111;color:#fff;font-size:16px;font-weight:700
+}
+.onboard-links{
+ margin-top:12px;text-align:center;font-size:12px;color:#666
+}
+
+/* 로그인 화면 */
+#login{
+ position:fixed;inset:0;background:#f5f5f5;z-index:20;
+ display:none;align-items:center;justify-content:center;padding:20px
+}
+#login.show{display:flex}
+.login-box{
+ width:100%;max-width:380px;text-align:center;
+ background:#fff;padding:28px 22px;border-radius:22px;
+ border:1px solid #e5e5e5
+}
+.login-box h1{font-size:32px;margin:0 0 10px}
+.login-box p{color:#777;margin:0 0 24px}
 .login-btn{
  width:100%;padding:15px;border:1px solid #ddd;
  border-radius:12px;background:white;color:#111;
  font-size:16px;margin:7px 0
 }
 .login-btn.dark{background:#111;color:white;border-color:#111}
-#loginStatus{font-size:13px;line-height:1.5}
+#loginStatus{font-size:13px;line-height:1.5;margin-top:12px!important}
 
 #app{display:none;height:100dvh}
 #sidebar{
@@ -81,9 +156,9 @@ header{
  background:#111;color:#fff
 }
 
-/* 결제 안내 모달 */
+/* 결제 모달 */
 #payModal{
- display:none;position:fixed;inset:0;background:#0006;z-index:30;
+ display:none;position:fixed;inset:0;background:#0006;z-index:40;
  align-items:center;justify-content:center;padding:20px
 }
 #payModal.show{display:flex}
@@ -100,7 +175,7 @@ header{
  flex:1;padding:13px;border-radius:12px;font-size:15px;font-weight:700
 }
 .pay-cancel{background:#f1f1f1;color:#333}
-.pay-submit{background:#3182f6;color:#fff}
+.pay-submit{background:#111;color:#fff}
 
 #messages{
  flex:1;overflow:auto;width:100%;max-width:850px;
@@ -127,7 +202,6 @@ header{
  border-radius:12px;display:block;margin-bottom:8px
 }
 
-/* AI 답변 작성 중 표시 */
 .typing-indicator{
  display:inline-block;
  color:#999;
@@ -141,7 +215,6 @@ header{
  -webkit-text-fill-color:transparent;
  animation:typingShimmer 1.5s linear infinite;
 }
-
 .typing-dots{
  display:inline-flex;
  gap:4px;
@@ -165,7 +238,6 @@ header{
  40%{opacity:1;transform:scale(1)}
 }
 
-/* 입력창 */
 #bottom{border-top:1px solid #eee;padding:12px;background:white}
 #inputArea{
  max-width:800px;margin:auto;display:flex;align-items:center;
@@ -218,6 +290,33 @@ header{
 
 <body>
 
+<!-- 진입 시 무채색 영상 배경 온보딩 -->
+<div id="onboarding">
+ <video id="bgVideo" autoplay muted loop playsinline>
+  <source src="/intro-bg.mp4" type="video/mp4">
+ </video>
+ <div class="mono-overlay"></div>
+
+ <div class="onboard-inner">
+  <div class="step-bars" id="stepBars">
+   <span class="step-bar active"></span>
+   <span class="step-bar"></span>
+   <span class="step-bar"></span>
+   <span class="step-bar"></span>
+  </div>
+
+  <div class="onboard-stage" id="onboardStage"></div>
+
+  <div class="onboard-bottom">
+   <button id="onboardNextBtn" type="button" class="primary-pill-btn" onclick="nextOnboardStep()">
+    시작하기
+   </button>
+   <div id="onboardLinks" class="onboard-links">이용약관 · 개인정보 처리방침</div>
+  </div>
+ </div>
+</div>
+
+<!-- 로그인 화면 -->
 <div id="login">
  <div class="login-box">
   <h1>Chat Buddy</h1>
@@ -250,8 +349,8 @@ header{
   <h2>Chet Buddy Premium</h2>
   <div class="pay-price">4,900원 <span>/ 30일 이용권</span></div>
   <ul class="pay-list">
-   <li>상위 Gemini Pro 모델로 더 똑똑한 답변</li>
-   <li>더 길고 깊이 있는 심층 답변 제공</li>
+   <li>더 빠르고 똑똑한 프리미엄 모델 답변</li>
+   <li>더 길고 깊이 있는 맞춤 설명</li>
    <li>Google 계정 전용 멤버십 (게스트 불가)</li>
   </ul>
   <div class="pay-actions">
@@ -321,7 +420,6 @@ const firebaseConfig = {
   measurementId: "G-N6P62LE9W9"
 };
 
-// 토스페이먼츠 클라이언트 키 (토스 개발자센터에서 발급받은 test_ck_ 또는 live_ck_ 로 교체)
 const TOSS_CLIENT_KEY = "test_ck_여기에_토스_클라이언트키_입력";
 const PREMIUM_AMOUNT = 4900;
 
@@ -329,6 +427,10 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 
+const onboardingEl = document.getElementById("onboarding");
+const onboardStageEl = document.getElementById("onboardStage");
+const onboardNextBtnEl = document.getElementById("onboardNextBtn");
+const onboardLinksEl = document.getElementById("onboardLinks");
 const login = document.getElementById("login");
 const app = document.getElementById("app");
 const messages = document.getElementById("messages");
@@ -336,6 +438,83 @@ const input = document.getElementById("question");
 const imageInput = document.getElementById("imageInput");
 const statusText = document.getElementById("status");
 const micButton = document.getElementById("mic");
+
+const onboardSteps = [
+  {
+    icon: "CB",
+    title: "Chat Buddy",
+    desc: "당신의 일상 AI 어시스턴트. 무엇이든 편하게 물어보세요.",
+    btn: "시작하기",
+    links: "이용약관 · 개인정보 처리방침"
+  },
+  {
+    icon: "PRO",
+    title: "더 빠르고 똑똑한\nChet Buddy Premium",
+    desc: "상위 모델과 확장된 응답으로 질문에 더 정확하고 깊게 답합니다.",
+    btn: "다음 >",
+    links: ""
+  },
+  {
+    icon: "AI",
+    title: "사진과 음성으로\n더 쉽게 대화하세요",
+    desc: "사진 첨부와 음성 입력으로 언제 어디서든 바로 질문할 수 있습니다.",
+    btn: "다음 >",
+    links: ""
+  },
+  {
+    icon: "✓",
+    title: "Chat Buddy에 오신 것을\n환영합니다",
+    desc: "서비스 이용을 위한 안내를 확인해 주세요.",
+    btn: "동의하고 계속하기 >",
+    links: "",
+    isConsent: true
+  }
+];
+
+let onboardIndex = 0;
+
+function renderOnboardStep() {
+  const step = onboardSteps[onboardIndex];
+  const bars = document.querySelectorAll("#stepBars .step-bar");
+  bars.forEach((bar, idx) => {
+    bar.classList.toggle("active", idx === onboardIndex);
+  });
+
+  if (step.isConsent) {
+    onboardStageEl.innerHTML = `
+      <div class="mono-icon-box">${step.icon}</div>
+      <h2 class="onboard-title">${step.title.replace("\n", "<br>")}</h2>
+      <div class="consent-box">
+        입력하신 메시지와 첨부 파일은 AI 답변 생성을 위해 서버 및 AI 모델 API로 전송되어 처리됩니다.<br><br>
+        게스트 로그인은 무료 등급으로 제공되며, Chet Buddy Premium(월 4,900원)은 Google 로그인 계정에 한해 적용됩니다.<br><br>
+        '동의하고 계속하기'를 누르면 안내에 동의한 것으로 간주하고 로그인 화면으로 이동합니다.
+      </div>
+    `;
+  } else {
+    onboardStageEl.innerHTML = `
+      <div class="mono-icon-box">${step.icon}</div>
+      <h2 class="onboard-title">${step.title.replace("\n", "<br>")}</h2>
+      <p class="onboard-desc">${step.desc}</p>
+    `;
+  }
+
+  onboardNextBtnEl.textContent = step.btn;
+  onboardLinksEl.textContent = step.links;
+}
+
+function nextOnboardStep() {
+  if (onboardIndex < onboardSteps.length - 1) {
+    onboardIndex += 1;
+    renderOnboardStep();
+  } else {
+    onboardingEl.style.display = "none";
+    if (!currentUser) {
+      login.classList.add("show");
+    }
+  }
+}
+
+renderOnboardStep();
 
 let currentUser = null;
 let currentPlan = "free";
@@ -410,7 +589,6 @@ function closePayModal() {
 function handlePremiumUpgrade() {
   if (!currentUser) return;
 
-  // 게스트는 프리미엄 불가 -> 구글 로그인 유도
   if (!isGoogleUser(currentUser)) {
     const goGoogle = confirm(
       "Chet Buddy Premium(월 4,900원)은 구글 로그인 계정만 이용할 수 있습니다.\n지금 구글 로그인으로 전환할까요?"
@@ -429,7 +607,6 @@ function handlePremiumUpgrade() {
   openPayModal();
 }
 
-// 토스페이먼츠 결제창 호출
 async function startTossPayment() {
   if (!currentUser || !isGoogleUser(currentUser)) {
     alert("구글 로그인 후 결제할 수 있습니다.");
@@ -473,13 +650,11 @@ async function startTossPayment() {
   }
 }
 
-// 토스페이먼츠 리다이렉트 복귀 시 백엔드 결제 승인 검증
 async function handleTossRedirectResult(user) {
   const params = new URLSearchParams(window.location.search);
   const tossResult = params.get("tossResult");
   if (!tossResult) return;
 
-  // URL 파라미터 정리
   const cleanUrl = window.location.origin + window.location.pathname;
 
   if (tossResult === "fail") {
@@ -536,7 +711,6 @@ async function handleTossRedirectResult(user) {
   }
 }
 
-// 서버에 저장된 구독 상태와 동기화
 async function syncSubscriptionFromServer(user) {
   if (!isGoogleUser(user)) {
     saveUserPlan(user, "free");
@@ -596,7 +770,8 @@ auth.onAuthStateChanged(async user => {
   if (user) {
     currentUser = user;
     currentPlan = loadUserPlan(user);
-    login.style.display = "none";
+    onboardingEl.style.display = "none";
+    login.classList.remove("show");
     app.style.display = "block";
     document.getElementById("userEmail").textContent =
       user.isAnonymous ? "게스트 계정" : (user.email || "Google 계정");
@@ -611,7 +786,9 @@ auth.onAuthStateChanged(async user => {
     currentUser = null;
     currentPlan = "free";
     app.style.display = "none";
-    login.style.display = "flex";
+    if (onboardingEl.style.display === "none") {
+      login.classList.add("show");
+    }
   }
 });
 
