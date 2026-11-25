@@ -20,10 +20,11 @@ button{cursor:pointer;border:0;font-family:inherit}
 /* 처음 진입 온보딩 (무채색 영상 배경) */
 #onboarding{
  position:fixed;inset:0;z-index:30;
- display:flex;flex-direction:column;justify-content:space-between;
+ display:none;flex-direction:column;justify-content:space-between;
  padding:28px 22px 26px;
  background:#ececec;color:#111;overflow:hidden
 }
+#onboarding.show{display:flex}
 #bgCanvas{
  position:absolute;inset:0;width:100%;height:100%;
  z-index:0;pointer-events:none
@@ -294,7 +295,7 @@ header{
 
 <body>
 
-<!-- 진입 시 무채색 영상 배경 온보딩 -->
+<!-- 최초 1회 노출되는 무채색 영상 배경 온보딩 -->
 <div id="onboarding" onclick="ensureBgVideoPlay()">
  <canvas id="bgCanvas"></canvas>
  <video id="bgVideo" autoplay muted loop playsinline preload="auto">
@@ -427,6 +428,7 @@ const firebaseConfig = {
 
 const TOSS_CLIENT_KEY = "test_ck_여기에_토스_클라이언트키_입력";
 const PREMIUM_AMOUNT = 4900;
+const ONBOARD_DONE_KEY = "chatBuddyOnboardDone_v1";
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -464,7 +466,6 @@ function ensureBgVideoPlay() {
   }
 }
 
-// 영상 파일이 없거나 로딩 전에도 무채색 움직임이 이어지도록 캔버스 구동
 (function startMonochromeMotionBg() {
   if (!bgCanvasEl) return;
   const ctx = bgCanvasEl.getContext("2d");
@@ -543,6 +544,14 @@ const onboardSteps = [
 
 let onboardIndex = 0;
 
+function hasCompletedOnboarding() {
+  return localStorage.getItem(ONBOARD_DONE_KEY) === "true";
+}
+
+function markOnboardingCompleted() {
+  localStorage.setItem(ONBOARD_DONE_KEY, "true");
+}
+
 function renderOnboardStep() {
   const step = onboardSteps[onboardIndex];
   const bars = document.querySelectorAll("#stepBars .step-bar");
@@ -578,14 +587,22 @@ function nextOnboardStep() {
     onboardIndex += 1;
     renderOnboardStep();
   } else {
-    onboardingEl.style.display = "none";
+    markOnboardingCompleted();
+    onboardingEl.classList.remove("show");
     if (!currentUser) {
       login.classList.add("show");
     }
   }
 }
 
-renderOnboardStep();
+// 처음 진입일 때만 온보딩 표시, 다시 들어올 때는 숨김
+if (!hasCompletedOnboarding()) {
+  renderOnboardStep();
+  onboardingEl.classList.add("show");
+} else {
+  onboardingEl.classList.remove("show");
+  login.classList.add("show");
+}
 
 let currentUser = null;
 let currentPlan = "free";
@@ -841,7 +858,8 @@ auth.onAuthStateChanged(async user => {
   if (user) {
     currentUser = user;
     currentPlan = loadUserPlan(user);
-    onboardingEl.style.display = "none";
+    markOnboardingCompleted();
+    onboardingEl.classList.remove("show");
     login.classList.remove("show");
     app.style.display = "block";
     document.getElementById("userEmail").textContent =
@@ -857,7 +875,7 @@ auth.onAuthStateChanged(async user => {
     currentUser = null;
     currentPlan = "free";
     app.style.display = "none";
-    if (onboardingEl.style.display === "none") {
+    if (!onboardingEl.classList.contains("show")) {
       login.classList.add("show");
     }
   }
