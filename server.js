@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 
 // Gemini 설정
 const API_KEY = process.env.GEMINI_API_KEY;
-const FREE_MODEL = process.env.GEMINI_FREE_MODEL || "gemini-2.5-flash";
+const FREE_MODEL = process.env.GEMINI_FREE_MODEL || "gemini-3.8-flash";
 const PREMIUM_MODEL = process.env.GEMINI_PREMIUM_MODEL || "gemini-2.5-pro";
 
 // 토스페이먼츠 시크릿 키 (Render Environment에 TOSS_SECRET_KEY 등록)
