@@ -7,6 +7,8 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<!-- 토스페이먼츠 SDK v2 -->
+<script src="https://js.tosspayments.com/v2/standard"></script>
 
 <style>
 *{box-sizing:border-box}
@@ -70,7 +72,7 @@ header{
 #menu{font-size:24px;background:white;color:#111;padding:0 4px 0 0}
 #title{font-size:19px;font-weight:700}
 #headerPlanBadge{
- padding:3px 8px;border-radius:999px;
+ padding:4px 9px;border-radius:999px;
  font-size:11px;font-weight:700;line-height:1.2;
  background:#f1f1f1;color:#333;
  white-space:nowrap
@@ -78,6 +80,27 @@ header{
 #headerPlanBadge.premium{
  background:#111;color:#fff
 }
+
+/* 결제 안내 모달 */
+#payModal{
+ display:none;position:fixed;inset:0;background:#0006;z-index:30;
+ align-items:center;justify-content:center;padding:20px
+}
+#payModal.show{display:flex}
+.pay-card{
+ width:100%;max-width:380px;background:#fff;border-radius:18px;
+ padding:22px;box-shadow:0 12px 32px #0002
+}
+.pay-card h2{margin:0 0 8px;font-size:20px}
+.pay-price{font-size:24px;font-weight:800;margin:10px 0 14px}
+.pay-price span{font-size:13px;font-weight:400;color:#666}
+.pay-list{margin:0 0 18px;padding-left:18px;color:#444;font-size:14px;line-height:1.7}
+.pay-actions{display:flex;gap:8px}
+.pay-actions button{
+ flex:1;padding:13px;border-radius:12px;font-size:15px;font-weight:700
+}
+.pay-cancel{background:#f1f1f1;color:#333}
+.pay-submit{background:#3182f6;color:#fff}
 
 #messages{
  flex:1;overflow:auto;width:100%;max-width:850px;
@@ -221,6 +244,23 @@ header{
  </div>
 </div>
 
+<!-- 토스페이먼츠 결제 확인 모달 -->
+<div id="payModal" onclick="if(event.target===this) closePayModal()">
+ <div class="pay-card">
+  <h2>Chet Buddy Premium</h2>
+  <div class="pay-price">4,900원 <span>/ 30일 이용권</span></div>
+  <ul class="pay-list">
+   <li>상위 Gemini Pro 모델로 더 똑똑한 답변</li>
+   <li>더 길고 깊이 있는 심층 답변 제공</li>
+   <li>Google 계정 전용 멤버십 (게스트 불가)</li>
+  </ul>
+  <div class="pay-actions">
+   <button type="button" class="pay-cancel" onclick="closePayModal()">취소</button>
+   <button type="button" class="pay-submit" onclick="startTossPayment()">토스로 결제하기</button>
+  </div>
+ </div>
+</div>
+
 <div id="app">
  <div id="main">
   <header>
@@ -280,6 +320,10 @@ const firebaseConfig = {
   appId: "1:238364880773:web:0281f439d192b32157deec",
   measurementId: "G-N6P62LE9W9"
 };
+
+// 토스페이먼츠 클라이언트 키 (토스 개발자센터에서 발급받은 test_ck_ 또는 live_ck_ 로 교체)
+const TOSS_CLIENT_KEY = "test_ck_여기에_토스_클라이언트키_입력";
+const PREMIUM_AMOUNT = 4900;
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -348,17 +392,25 @@ function renderPlanUI() {
   }
 
   if (headerBadge) {
-    headerBadge.textContent = isPremium ? "Chet Buddy Premium 이용 중" : "Chet Buddy Premium 시작하기";
-    headerBadge.className = isPremium ? "premium" : "";
-    headerBadge.title = isPremium
+    headerBadge.textContent = isPremium
       ? "Chet Buddy Premium 이용 중"
-      : "Chet Buddy Premium (₩4,900/월) 시작하기";
+      : "Chet Buddy Premium 시작하기";
+    headerBadge.className = isPremium ? "premium" : "";
   }
 }
 
-async function handlePremiumUpgrade() {
+function openPayModal() {
+  document.getElementById("payModal").classList.add("show");
+}
+
+function closePayModal() {
+  document.getElementById("payModal").classList.remove("show");
+}
+
+function handlePremiumUpgrade() {
   if (!currentUser) return;
 
+  // 게스트는 프리미엄 불가 -> 구글 로그인 유도
   if (!isGoogleUser(currentUser)) {
     const goGoogle = confirm(
       "Chet Buddy Premium(월 4,900원)은 구글 로그인 계정만 이용할 수 있습니다.\n지금 구글 로그인으로 전환할까요?"
@@ -370,39 +422,141 @@ async function handlePremiumUpgrade() {
   }
 
   if (currentPlan === "premium") {
-    alert("이미 Chet Buddy Premium(월 4,900원)을 이용 중입니다.");
+    alert("이미 Chet Buddy Premium을 이용 중입니다.");
     return;
   }
 
-  const ok = confirm(
-    "Chet Buddy Premium(월 4,900원)을 시작할까요?\n더 빠르고 똑똑한 답변이 제공됩니다."
-  );
-  if (!ok) return;
+  openPayModal();
+}
+
+// 토스페이먼츠 결제창 호출
+async function startTossPayment() {
+  if (!currentUser || !isGoogleUser(currentUser)) {
+    alert("구글 로그인 후 결제할 수 있습니다.");
+    return;
+  }
+
+  if (!window.TossPayments) {
+    alert("토스페이먼츠 결제 모듈을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.");
+    return;
+  }
 
   try {
-    const res = await fetch("/api/premium/activate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-auth-provider": "google",
-        "x-user-id": currentUser.uid
-      },
-      body: JSON.stringify({
-        provider: "google",
-        userId: currentUser.uid,
-        planCode: "CHET_BUDDY_PREMIUM_4900"
-      })
+    closePayModal();
+
+    const tossPayments = TossPayments(TOSS_CLIENT_KEY);
+    const payment = tossPayments.payment({
+      customerKey: "google_" + currentUser.uid
     });
 
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || "프리미엄 활성화에 실패했습니다.");
+    const orderId = "cbp_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+    const baseUrl = window.location.origin + window.location.pathname;
+
+    await payment.requestPayment({
+      method: "CARD",
+      amount: {
+        currency: "KRW",
+        value: PREMIUM_AMOUNT
+      },
+      orderId: orderId,
+      orderName: "Chet Buddy Premium (30일)",
+      successUrl: baseUrl + "?tossResult=success",
+      failUrl: baseUrl + "?tossResult=fail",
+      customerEmail: currentUser.email || undefined,
+      customerName: currentUser.displayName || "Chat Buddy 사용자"
+    });
+  } catch (err) {
+    console.error("토스 결제창 오류:", err);
+    if (err?.code !== "USER_CANCEL") {
+      alert("결제 요청 중 오류가 발생했습니다: " + (err.message || err));
+    }
+  }
+}
+
+// 토스페이먼츠 리다이렉트 복귀 시 백엔드 결제 승인 검증
+async function handleTossRedirectResult(user) {
+  const params = new URLSearchParams(window.location.search);
+  const tossResult = params.get("tossResult");
+  if (!tossResult) return;
+
+  // URL 파라미터 정리
+  const cleanUrl = window.location.origin + window.location.pathname;
+
+  if (tossResult === "fail") {
+    const failMessage = params.get("message") || "결제가 취소되었거나 실패했습니다.";
+    window.history.replaceState({}, document.title, cleanUrl);
+    alert("결제 실패: " + failMessage);
+    return;
+  }
+
+  if (tossResult === "success") {
+    const paymentKey = params.get("paymentKey");
+    const orderId = params.get("orderId");
+    const amount = Number(params.get("amount"));
+
+    window.history.replaceState({}, document.title, cleanUrl);
+
+    if (!isGoogleUser(user)) {
+      alert("게스트 계정은 프리미엄을 적용할 수 없습니다.");
+      return;
     }
 
-    saveUserPlan(currentUser, data.plan || "premium");
-    alert("Chet Buddy Premium(월 4,900원)이 활성화되었습니다!");
-  } catch (err) {
-    alert("오류: " + err.message);
+    try {
+      statusText.textContent = "결제를 확인하고 있습니다...";
+
+      const res = await fetch("/api/payments/toss/confirm", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-auth-provider": "google",
+          "x-user-id": user.uid
+        },
+        body: JSON.stringify({
+          provider: "google",
+          userId: user.uid,
+          paymentKey,
+          orderId,
+          amount
+        })
+      });
+
+      const data = await res.json();
+      statusText.textContent = "";
+
+      if (!res.ok) {
+        throw new Error(data.error || "결제 승인 확인에 실패했습니다.");
+      }
+
+      saveUserPlan(user, data.plan || "premium");
+      alert("결제가 완료되어 Chet Buddy Premium이 활성화되었습니다!");
+    } catch (err) {
+      statusText.textContent = "";
+      alert("결제 승인 오류: " + err.message);
+    }
+  }
+}
+
+// 서버에 저장된 구독 상태와 동기화
+async function syncSubscriptionFromServer(user) {
+  if (!isGoogleUser(user)) {
+    saveUserPlan(user, "free");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/subscription/status", {
+      headers: {
+        "x-auth-provider": "google",
+        "x-user-id": user.uid
+      }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.plan) {
+      saveUserPlan(user, data.plan);
+    }
+  } catch (e) {
+    console.warn("구독 상태 조회 실패:", e);
   }
 }
 
@@ -438,7 +592,7 @@ function guestLogin() {
   });
 }
 
-auth.onAuthStateChanged(user => {
+auth.onAuthStateChanged(async user => {
   if (user) {
     currentUser = user;
     currentPlan = loadUserPlan(user);
@@ -450,6 +604,9 @@ auth.onAuthStateChanged(user => {
     loadChats();
     currentChat = null;
     newChat();
+
+    await handleTossRedirectResult(user);
+    await syncSubscriptionFromServer(user);
   } else {
     currentUser = null;
     currentPlan = "free";
@@ -537,7 +694,6 @@ function addMessage(text, type, image, save = true) {
   return box;
 }
 
-// AI 답변 위치에 작성 중 표시
 function showTyping() {
   const welcome = document.getElementById("welcome");
   if (welcome) welcome.remove();
@@ -656,7 +812,6 @@ async function sendMessage() {
   }
 }
 
-// 음성 입력
 function startVoice() {
   const Recognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -708,7 +863,6 @@ function startVoice() {
   }
 }
 
-// 자동 음성 답변
 function speakText(text) {
   if (!window.speechSynthesis || !text) return;
 
